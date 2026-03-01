@@ -1,14 +1,17 @@
 // Імпортуємо функцію createServer з вбудованого модуля Node.js для створення HTTP-сервера
 const { createServer } = require("node:http");
+// Імпортуємо конфігурацію (з валідацією змінних середовища)
+const config = require('./config');
+// Імпортуємо logger для логування запитів
+const { logRequest, logInfo, logError } = require('./logger');
 
 // База даних студентів у пам'яті (зберігається тільки під час роботи програми)
 let STUDENTS = [
   { id: 1, name: "Ivan", grades: [5, 4, 5], course: 2 },
 ];
 
-// Налаштування сервера: читаємо з .env файлу або використовуємо значення за замовчуванням
-const PORT = process.env.PORT || 3000;
-const HOSTNAME = process.env.HOSTNAME || "localhost";
+// Час запуску сервера (для uptime)
+const startTime = Date.now();
 
 // Створюємо HTTP-сервер, який обробляє всі вхідні запити
 const server = createServer((req, res) => {
@@ -22,6 +25,22 @@ const server = createServer((req, res) => {
   // Встановлюємо заголовок відповіді: повертаємо JSON з UTF-8 кодуванням
   // Встановлюємо заголовок відповіді: повертаємо JSON з UTF-8 кодуванням
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  // ===== GET /health: перевірка стану сервера =====
+  if (method === "GET" && pathname === "/health") {
+    const healthData = {
+      pid: process.pid,
+      nodeVersion: process.version,
+      platform: process.platform,
+      uptime: Math.floor((Date.now() - startTime) / 1000), // в секундах
+      memoryUsage: process.memoryUsage(),
+    };
+    
+    res.statusCode = 200;
+    const response = JSON.stringify(healthData);
+    logRequest(req, res.statusCode);
+    return res.end(response);
+  }
 
   // ===== GET: отримати список студентів (з можливістю фільтрації по курсу) =====
   if (method === "GET" && pathname === "/students") {
@@ -40,7 +59,9 @@ const server = createServer((req, res) => {
 
     // Повертаємо успішну відповідь (200 OK) з кількістю та списком студентів
     res.statusCode = 200;
-    return res.end(JSON.stringify({ count: results.length, items: results }));
+    const response = JSON.stringify({ count: results.length, items: results });
+    logRequest(req, res.statusCode);
+    return res.end(response);
   }
 
   // ===== POST: додати нового студента =====
@@ -63,11 +84,11 @@ const server = createServer((req, res) => {
         // Валідація: перевіряємо наявність обов'язкових полів
         if (!data.name || !data.course || !Array.isArray(data.grades)) {
           res.statusCode = 400; // 400 Bad Request - невалідні дані
-          return res.end(
-            JSON.stringify({
-              error: "name, course і grades (масив) обов'язкові",
-            })
-          );
+          const response = JSON.stringify({
+            error: "name, course і grades (масив) обов'язкові",
+          });
+          logRequest(req, res.statusCode, "Validation failed");
+          return res.end(response);
         }
 
         // Генеруємо новий ID: беремо ID останнього студента + 1
@@ -87,11 +108,15 @@ const server = createServer((req, res) => {
 
         // Повертаємо успішну відповідь (201 Created)
         res.statusCode = 201;
-        res.end(JSON.stringify({ message: "Created", student: newStudent }));
+        const response = JSON.stringify({ message: "Created", student: newStudent });
+        logRequest(req, res.statusCode);
+        res.end(response);
       } catch {
         // Якщо JSON невалідний, повертаємо помилку
         res.statusCode = 400;
-        res.end(JSON.stringify({ error: "Invalid JSON" }));
+        const response = JSON.stringify({ error: "Invalid JSON" });
+        logRequest(req, res.statusCode, "Invalid JSON");
+        res.end(response);
       }
     });
     return;
@@ -114,7 +139,9 @@ const server = createServer((req, res) => {
       // Якщо студента з таким ID не знайдено
       if (index === -1) {
         res.statusCode = 404; // 404 Not Found
-        return res.end(JSON.stringify({ error: "Student not found" }));
+        const response = JSON.stringify({ error: "Student not found" });
+        logRequest(req, res.statusCode, "Student not found");
+        return res.end(response);
       }
 
       try {
@@ -124,7 +151,9 @@ const server = createServer((req, res) => {
         // Захист: не дозволяємо змінювати ID студента
         if ("id" in updates) {
           res.statusCode = 400;
-          return res.end(JSON.stringify({ error: "Cannot change id" }));
+          const response = JSON.stringify({ error: "Cannot change id" });
+          logRequest(req, res.statusCode, "Cannot change id");
+          return res.end(response);
         }
 
         // Оновлюємо студента: зберігаємо старі дані та перезаписуємо тільки нові поля
@@ -132,13 +161,15 @@ const server = createServer((req, res) => {
 
         // Повертаємо успішну відповідь з оновленим студентом
         res.statusCode = 200;
-        res.end(
-          JSON.stringify({ message: "Updated", student: STUDENTS[index] })
-        );
+        const response = JSON.stringify({ message: "Updated", student: STUDENTS[index] });
+        logRequest(req, res.statusCode);
+        res.end(response);
       } catch {
         // Якщо JSON невалідний
         res.statusCode = 400;
-        res.end(JSON.stringify({ error: "Invalid JSON" }));
+        const response = JSON.stringify({ error: "Invalid JSON" });
+        logRequest(req, res.statusCode, "Invalid JSON");
+        res.end(response);
       }
     });
     return;
@@ -157,20 +188,68 @@ const server = createServer((req, res) => {
     // Якщо довжина масиву зменшилась, значить студента знайдено і видалено
     if (STUDENTS.length < originalLength) {
       res.statusCode = 200;
-      return res.end(JSON.stringify({ message: "Student removed" }));
+      const response = JSON.stringify({ message: "Student removed" });
+      logRequest(req, res.statusCode);
+      return res.end(response);
     }
 
     // Якщо довжина не змінилась, значить студента з таким ID не було
     res.statusCode = 404;
-    return res.end(JSON.stringify({ error: "Student not found" }));
+    const response = JSON.stringify({ error: "Student not found" });
+    logRequest(req, res.statusCode, "Student not found");
+    return res.end(response);
   }
 
   // Якщо жоден маршрут не підійшов, повертаємо помилку 404
   res.statusCode = 404;
-  res.end(JSON.stringify({ error: "Route not found" }));
+  const response = JSON.stringify({ error: "Route not found" });
+  logRequest(req, res.statusCode, "Route not found");
+  res.end(response);
+});
+
+// Функція для graceful shutdown
+function gracefulShutdown(signal) {
+  logInfo(`${signal} received. Starting graceful shutdown...`);
+  
+  // Таймаут для примусового завершення (10 секунд)
+  const forceShutdownTimeout = setTimeout(() => {
+    logError('Could not close connections in time, forcefully shutting down');
+    process.exit(1);
+  }, 10000);
+  
+  // Закриваємо HTTP сервер
+  server.close((err) => {
+    clearTimeout(forceShutdownTimeout);
+    
+    if (err) {
+      logError('Error during shutdown', { error: err.message });
+      process.exit(1);
+    }
+    
+    logInfo('Server closed successfully');
+    process.exit(0);
+  });
+}
+
+// Обробка сигналів SIGINT (Ctrl+C) та SIGTERM
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Глобальні обробники помилок
+process.on('uncaughtException', (err) => {
+  logError('Uncaught Exception', { error: err.message, stack: err.stack });
+  gracefulShutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logError('Unhandled Rejection', { reason: String(reason), promise: String(promise) });
+  gracefulShutdown('unhandledRejection');
 });
 
 // Запускаємо сервер на вказаному хості та порту
-server.listen(PORT, HOSTNAME, () => {
-  console.log(`Server running at http://${HOSTNAME}:${PORT}/`);
+server.listen(config.PORT, config.HOSTNAME, () => {
+  logInfo(`Server running at http://${config.HOSTNAME}:${config.PORT}/`, { 
+    nodeEnv: config.NODE_ENV,
+    pid: process.pid,
+  });
 });
