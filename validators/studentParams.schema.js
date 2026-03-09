@@ -1,0 +1,12 @@
+const studentParamsSchema = {
+  type: "object",
+  properties: {
+    id: {
+      type: "integer",
+      minimum: 1
+    }
+  },
+  required: ["id"]
+};
+
+module.exports = studentParamsSchema;

@@ -1,0 +1,43 @@
+{
+  "name": "lab3-common",
+  "version": "1.0.0",
+  "description": "REST API server for Framework Technologies Lab 3",
+  "main": "app.js",
+  "imports": {
+    "#controllers/*": "./controllers/*.js",
+    "#services/*": "./services/*.js",
+    "#routes/*": "./routes/*.js",
+    "#data/*": "./data/*.js",
+    "#constants/*": "./constants/*.js",
+    "#config/*": "./config/*.js",
+    "#utils/*": "./utils/*.js",
+    "#validators/*": "./validators/*.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "check": "npm run lint && npm run format:check"
+  },
+  "keywords": [],
+  "author": "KYNZEK",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "dotenv": "^17.3.1"
+  }
+}
