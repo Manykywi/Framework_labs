@@ -1,8 +1,8 @@
-const studentService = require("#services/student.service");
-const HTTP = require("#constants/httpStatus");
+import * as studentService from '#services/student.service';
+import * as HTTP from '#constants/httpStatus';
 
 function getStudents(req, res, parsedUrl) {
-  const course = parsedUrl.searchParams.get("course");
+  const course = parsedUrl.searchParams.get('course');
 
   const results = studentService.getAllStudents(course);
 
@@ -10,6 +10,4 @@ function getStudents(req, res, parsedUrl) {
   res.end(JSON.stringify({ count: results.length, items: results }));
 }
 
-module.exports = {
-  getStudents
-};
+export { getStudents };

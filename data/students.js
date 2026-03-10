@@ -1,10 +1,9 @@
-let STUDENTS = [
-  { id: 1, name: "Ivan", grades: [5, 4, 5], course: 2 }
-];
+let STUDENTS = [{ id: 1, name: 'Ivan', grades: [5, 4, 5], course: 2 }];
 
-module.exports = {
-  getStudents: () => STUDENTS,
-  setStudents: (students) => {
-    STUDENTS = students;
-  }
-};
+export function getStudents() {
+  return STUDENTS;
+}
+
+export function setStudents(students) {
+  STUDENTS = students;
+}

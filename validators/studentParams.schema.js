@@ -1,12 +1,12 @@
 const studentParamsSchema = {
-  type: "object",
+  type: 'object',
   properties: {
     id: {
-      type: "integer",
-      minimum: 1
-    }
+      type: 'integer',
+      minimum: 1,
+    },
   },
-  required: ["id"]
+  required: ['id'],
 };
 
-module.exports = studentParamsSchema;
+export default studentParamsSchema;

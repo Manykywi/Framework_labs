@@ -1,7 +1,7 @@
-const studentController = require("#controllers/student.controller");
+import * as studentController from '#controllers/student.controller';
 
 function handleStudentRoutes(req, res, pathname, parsedUrl) {
-  if (req.method === "GET" && pathname === "/students") {
+  if (req.method === 'GET' && pathname === '/students') {
     studentController.getStudents(req, res, parsedUrl);
     return true;
   }
@@ -9,4 +9,4 @@ function handleStudentRoutes(req, res, pathname, parsedUrl) {
   return false;
 }
 
-module.exports = handleStudentRoutes;
+export default handleStudentRoutes;

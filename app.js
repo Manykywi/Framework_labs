@@ -1,21 +1,21 @@
-require("dotenv").config();
+import 'dotenv/config';
 
-const { createServer } = require("node:http");
-const config = require("./config/config");
-const handleStudentRoutes = require("./routes/student.routes");
+import { createServer } from 'node:http';
+import config from './config/config.js';
+import handleStudentRoutes from './routes/student.routes.js';
 
 const server = createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
 
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
   if (handleStudentRoutes(req, res, pathname, parsedUrl)) {
     return;
   }
 
   res.statusCode = 404;
-  res.end(JSON.stringify({ error: "Route not found" }));
+  res.end(JSON.stringify({ error: 'Route not found' }));
 });
 
 server.listen(config.PORT, config.HOSTNAME, () => {

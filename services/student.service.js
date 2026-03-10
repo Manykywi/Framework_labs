@@ -1,6 +1,6 @@
-const { getStudents, setStudents } = require("#data/students");
+import { getStudents, setStudents } from '#data/students';
 
-function getAllStudents(course) {
+export function getAllStudents(course) {
   let students = [...getStudents()];
 
   if (course) {
@@ -10,14 +10,14 @@ function getAllStudents(course) {
   return students;
 }
 
-function createStudent(data) {
+export function createStudent(data) {
   const students = getStudents();
 
   const lastId = students.length ? students[students.length - 1].id : 0;
 
   const newStudent = {
     id: lastId + 1,
-    ...data
+    ...data,
   };
 
   students.push(newStudent);
@@ -25,7 +25,7 @@ function createStudent(data) {
   return newStudent;
 }
 
-function updateStudent(id, updates) {
+export function updateStudent(id, updates) {
   const students = getStudents();
 
   const index = students.findIndex((s) => s.id === id);
@@ -37,7 +37,7 @@ function updateStudent(id, updates) {
   return students[index];
 }
 
-function deleteStudent(id) {
+export function deleteStudent(id) {
   const students = getStudents();
 
   const newStudents = students.filter((s) => s.id !== id);
@@ -48,10 +48,3 @@ function deleteStudent(id) {
 
   return true;
 }
-
-module.exports = {
-  getAllStudents,
-  createStudent,
-  updateStudent,
-  deleteStudent
-};

@@ -10,13 +10,13 @@ function formatLog(data) {
     }
   }
 
-  return parts.join(" ");
+  return parts.join(' ');
 }
 
 function log(level, data) {
   const formatted = formatLog({ level, ...data });
 
-  if (level === "ERROR") {
+  if (level === 'ERROR') {
     console.error(formatted);
   } else {
     console.log(formatted);
@@ -24,28 +24,22 @@ function log(level, data) {
 }
 
 function logRequest(req, statusCode) {
-  log("INFO", {
+  log('INFO', {
     method: req.method,
     url: req.url,
-    status: statusCode
+    status: statusCode,
   });
 }
 
 function logInfo(message) {
-  log("INFO", { message });
+  log('INFO', { message });
 }
 
 function logError(message) {
-  log("ERROR", { message });
+  log('ERROR', { message });
 }
 
 function logWarn(message) {
-  log("WARN", { message });
+  log('WARN', { message });
 }
-
-module.exports = {
-  logRequest,
-  logInfo,
-  logError,
-  logWarn
-};
+export { logRequest, logInfo, logError, logWarn };

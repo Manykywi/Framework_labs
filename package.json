@@ -2,6 +2,7 @@
   "name": "lab3-common",
   "version": "1.0.0",
   "description": "REST API server for Framework Technologies Lab 3",
+  "type": "module",
   "main": "app.js",
   "imports": {
     "#controllers/*": "./controllers/*.js",
@@ -18,6 +19,7 @@
   },
   "scripts": {
     "start": "node app.js",
+    "predev": "npm run check",
     "dev": "node app.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
