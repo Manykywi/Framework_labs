@@ -3,8 +3,13 @@ import 'dotenv/config';
 import { createServer } from 'node:http';
 import config from './config/config.js';
 import handleStudentRoutes from './routes/student.routes.js';
+import { logRequest } from '#utils/logger';
 
 const server = createServer((req, res) => {
+  res.on('finish', () => {
+    logRequest(req, res.statusCode);
+  });
+
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
 
