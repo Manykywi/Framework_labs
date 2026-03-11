@@ -3,6 +3,7 @@ require("dotenv").config();
 const { createServer } = require("node:http");
 const config = require("./config/config");
 const handleStudentRoutes = require("./routes/student.routes");
+const handleHealthRoutes = require("./routes/health.routes");
 const { logRequest } = require("#utils/logger");
 
 const server = createServer((req, res) => {
@@ -14,6 +15,10 @@ const server = createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  if (handleHealthRoutes(req, res, pathname, parsedUrl)) {
+    return;
+  }
 
   if (handleStudentRoutes(req, res, pathname, parsedUrl)) {
     return;
