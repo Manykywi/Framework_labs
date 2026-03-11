@@ -6,6 +6,7 @@ const handleStudentRoutes = require("./routes/student.routes");
 const handleHealthRoutes = require("./routes/health.routes");
 const { logRequest } = require("#utils/logger");
 
+
 const server = createServer((req, res) => {
   res.on("finish", () => {
     logRequest(req, res.statusCode);
