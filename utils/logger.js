@@ -23,8 +23,8 @@ function log(level, data) {
   }
 }
 
-function logRequest(req, statusCode) {
-  log("INFO", {
+function logRequest(req, statusCode, level = "INFO") {
+  log(level, {
     method: req.method,
     url: req.url,
     status: statusCode

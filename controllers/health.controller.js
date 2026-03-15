@@ -7,7 +7,8 @@ function getHealth(req, res) {
       pid: process.pid,
       nodeVersion: process.version,
       platform: process.platform,
-      uptime: Math.floor(process.uptime())
+      uptime: Math.floor(process.uptime()),
+      memoryUsage: process.memoryUsage()
     })
   );
 }
@@ -15,4 +16,3 @@ function getHealth(req, res) {
 module.exports = {
   getHealth
 };
-
