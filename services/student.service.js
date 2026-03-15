@@ -1,4 +1,4 @@
-const { getStudents, setStudents } = require("#data/students");
+import { getStudents, setStudents } from '#data/students';
 
 function getAllStudents(course) {
   let students = [...getStudents()];
@@ -17,7 +17,7 @@ function createStudent(data) {
 
   const newStudent = {
     id: lastId + 1,
-    ...data
+    ...data,
   };
 
   students.push(newStudent);
@@ -49,9 +49,9 @@ function deleteStudent(id) {
   return true;
 }
 
-module.exports = {
+export default {
   getAllStudents,
   createStudent,
   updateStudent,
-  deleteStudent
+  deleteStudent,
 };

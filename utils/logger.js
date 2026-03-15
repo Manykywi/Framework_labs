@@ -10,42 +10,35 @@ function formatLog(data) {
     }
   }
 
-  return parts.join(" ");
+  return parts.join(' ');
 }
 
 function log(level, data) {
   const formatted = formatLog({ level, ...data });
 
-  if (level === "ERROR") {
+  if (level === 'ERROR') {
     console.error(formatted);
   } else {
     console.log(formatted);
   }
 }
 
-function logRequest(req, statusCode, level = "INFO") {
+export function logRequest(req, statusCode, level = 'INFO') {
   log(level, {
     method: req.method,
     url: req.url,
-    status: statusCode
+    status: statusCode,
   });
 }
 
-function logInfo(message) {
-  log("INFO", { message });
+export function logInfo(message) {
+  log('INFO', { message });
 }
 
-function logError(message) {
-  log("ERROR", { message });
+export function logError(message) {
+  log('ERROR', { message });
 }
 
-function logWarn(message) {
-  log("WARN", { message });
+export function logWarn(message) {
+  log('WARN', { message });
 }
-
-module.exports = {
-  logRequest,
-  logInfo,
-  logError,
-  logWarn
-};

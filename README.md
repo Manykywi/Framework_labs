@@ -25,30 +25,30 @@ REST API сервер для управління студентами, побу
 
 У цій версії проєкту використовується **CommonJS модульна система**:
 
-* `require()`
-* `module.exports`
+- `require()`
+- `module.exports`
 
 Проєкт має модульну архітектуру та поділений на:
 
-* controllers
-* services
-* routes
-* data
-* validators
-* constants
-* utils
+- controllers
+- services
+- routes
+- data
+- validators
+- constants
+- utils
 
 ---
 
 # Основні можливості
 
-* REST API для управління студентами
-* Валідація даних через **AJV**
-* Конфігурація через `.env`
-* Логування HTTP запитів
-* Health check endpoint
-* ESLint + Prettier
-* npm scripts для перевірки коду
+- REST API для управління студентами
+- Валідація даних через **AJV**
+- Конфігурація через `.env`
+- Логування HTTP запитів
+- Health check endpoint
+- ESLint + Prettier
+- npm scripts для перевірки коду
 
 ---
 
@@ -185,7 +185,7 @@ Body:
 ```json
 {
   "name": "Olena",
-  "grades": [5,4,5],
+  "grades": [5, 4, 5],
   "course": 3
 }
 ```
@@ -262,14 +262,14 @@ Lab_3_Common/
 Приклад імпорту:
 
 ```javascript
-const studentService = require("../services/student.service");
+const studentService = require('../services/student.service');
 ```
 
 Приклад експорту:
 
 ```javascript
 module.exports = {
-  getStudents
+  getStudents,
 };
 ```
 
@@ -277,11 +277,10 @@ module.exports = {
 
 # Технології
 
-* Node.js
-* CommonJS
-* AJV
-* ESLint
-* Prettier
+- Node.js
+- CommonJS
+- AJV
+- ESLint
+- Prettier
 
 ---
-

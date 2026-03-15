@@ -1,4 +1,4 @@
-const HTTP = require("#constants/httpStatus");
+import HTTP from '#constants/httpStatus';
 
 function getHealth(req, res) {
   res.statusCode = HTTP.OK;
@@ -8,11 +8,11 @@ function getHealth(req, res) {
       nodeVersion: process.version,
       platform: process.platform,
       uptime: Math.floor(process.uptime()),
-      memoryUsage: process.memoryUsage()
+      memoryUsage: process.memoryUsage(),
     })
   );
 }
 
-module.exports = {
-  getHealth
+export default {
+  getHealth,
 };

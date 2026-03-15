@@ -1,26 +1,26 @@
-const studentController = require("#controllers/student.controller");
+import studentController from '#controllers/student.controller';
 
 function handleStudentRoutes(req, res, pathname, parsedUrl) {
-  if (req.method === "GET" && pathname === "/students") {
+  if (req.method === 'GET' && pathname === '/students') {
     studentController.getStudents(req, res, parsedUrl);
     return true;
   }
 
-  if (req.method === "POST" && pathname === "/students") {
+  if (req.method === 'POST' && pathname === '/students') {
     studentController.createStudent(req, res);
     return true;
   }
 
-  if (pathname.startsWith("/students/")) {
-    const idRaw = pathname.split("/")[2];
+  if (pathname.startsWith('/students/')) {
+    const idRaw = pathname.split('/')[2];
     const id = Number.parseInt(idRaw, 10);
 
-    if (req.method === "PATCH") {
+    if (req.method === 'PATCH') {
       studentController.updateStudent(req, res, id);
       return true;
     }
 
-    if (req.method === "DELETE") {
+    if (req.method === 'DELETE') {
       studentController.deleteStudent(req, res, id);
       return true;
     }
@@ -29,4 +29,4 @@ function handleStudentRoutes(req, res, pathname, parsedUrl) {
   return false;
 }
 
-module.exports = handleStudentRoutes;
+export default handleStudentRoutes;

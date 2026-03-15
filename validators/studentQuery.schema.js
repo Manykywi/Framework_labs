@@ -1,12 +1,12 @@
 const studentQuerySchema = {
-  type: "object",
+  type: 'object',
   properties: {
     course: {
-      type: "integer",
-      minimum: 1
-    }
+      type: 'integer',
+      minimum: 1,
+    },
   },
-  additionalProperties: false
+  additionalProperties: false,
 };
 
-module.exports = studentQuerySchema;
+export default studentQuerySchema;

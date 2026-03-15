@@ -1,8 +1,9 @@
 {
-  "name": "lab3-common",
+  "name": "lab3-esm",
   "version": "1.0.0",
   "description": "REST API server for Framework Technologies Lab 3",
   "main": "app.js",
+  "type": "module",
   "imports": {
     "#controllers/*": "./controllers/*.js",
     "#services/*": "./services/*.js",

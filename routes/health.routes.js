@@ -1,13 +1,13 @@
-const healthController = require("#controllers/health.controller");
+import healthController from '#controllers/health.controller';
 
 function handleHealthRoutes(req, res, pathname) {
-  if (req.method !== "GET") return false;
+  if (req.method !== 'GET') return false;
 
   if (
-    pathname === "/health" ||
-    pathname === "/api/health" ||
-    pathname === "/health/" ||
-    pathname === "/api/health/"
+    pathname === '/health' ||
+    pathname === '/api/health' ||
+    pathname === '/health/' ||
+    pathname === '/api/health/'
   ) {
     healthController.getHealth(req, res);
     return true;
@@ -16,5 +16,4 @@ function handleHealthRoutes(req, res, pathname) {
   return false;
 }
 
-module.exports = handleHealthRoutes;
-
+export default handleHealthRoutes;
