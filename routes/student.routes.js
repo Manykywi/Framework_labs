@@ -1,32 +1,66 @@
 import studentController from '#controllers/student.controller';
+import studentCreateBodySchema from '#schemas/studentCreateBody.schema';
+import studentPatchBodySchema from '#schemas/studentPatchBody.schema';
+import studentParamsSchema from '#schemas/studentParams.schema';
+import studentQuerySchema from '#schemas/studentQuery.schema';
+import studentsListResponseSchema from '#schemas/studentsListResponse.schema';
+import studentCreatedResponseSchema from '#schemas/studentCreatedResponse.schema';
+import studentUpdatedResponseSchema from '#schemas/studentUpdatedResponse.schema';
+import studentRemovedResponseSchema from '#schemas/studentRemovedResponse.schema';
 
-function handleStudentRoutes(req, res, pathname, parsedUrl) {
-  if (req.method === 'GET' && pathname === '/students') {
-    studentController.getStudents(req, res, parsedUrl);
-    return true;
-  }
+async function studentRoutes(fastify) {
+  fastify.get(
+    '/students',
+    {
+      schema: {
+        querystring: studentQuerySchema,
+        response: {
+          200: studentsListResponseSchema,
+        },
+      },
+    },
+    studentController.getStudents
+  );
 
-  if (req.method === 'POST' && pathname === '/students') {
-    studentController.createStudent(req, res);
-    return true;
-  }
+  fastify.post(
+    '/students',
+    {
+      schema: {
+        body: studentCreateBodySchema,
+        response: {
+          201: studentCreatedResponseSchema,
+        },
+      },
+    },
+    studentController.createStudent
+  );
 
-  if (pathname.startsWith('/students/')) {
-    const idRaw = pathname.split('/')[2];
-    const id = Number.parseInt(idRaw, 10);
+  fastify.patch(
+    '/students/:id',
+    {
+      schema: {
+        params: studentParamsSchema,
+        body: studentPatchBodySchema,
+        response: {
+          200: studentUpdatedResponseSchema,
+        },
+      },
+    },
+    studentController.updateStudent
+  );
 
-    if (req.method === 'PATCH') {
-      studentController.updateStudent(req, res, id);
-      return true;
-    }
-
-    if (req.method === 'DELETE') {
-      studentController.deleteStudent(req, res, id);
-      return true;
-    }
-  }
-
-  return false;
+  fastify.delete(
+    '/students/:id',
+    {
+      schema: {
+        params: studentParamsSchema,
+        response: {
+          200: studentRemovedResponseSchema,
+        },
+      },
+    },
+    studentController.deleteStudent
+  );
 }
 
-export default handleStudentRoutes;
+export default studentRoutes;

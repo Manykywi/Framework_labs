@@ -1,0 +1,10 @@
+const healthPublicResponseSchema = {
+  type: 'object',
+  properties: {
+    status: { type: 'string', enum: ['ok'] },
+  },
+  required: ['status'],
+  additionalProperties: false,
+};
+
+export default healthPublicResponseSchema;

@@ -1,6 +1,7 @@
-const studentBodySchema = {
+const studentSchema = {
   type: 'object',
   properties: {
+    id: { type: 'integer', minimum: 1 },
     name: { type: 'string', minLength: 1 },
     course: { type: 'integer', minimum: 1 },
     grades: {
@@ -8,8 +9,8 @@ const studentBodySchema = {
       items: { type: 'number' },
     },
   },
-  required: ['name', 'course', 'grades'],
+  required: ['id', 'name', 'course', 'grades'],
   additionalProperties: false,
 };
 
-export default studentBodySchema;
+export default studentSchema;

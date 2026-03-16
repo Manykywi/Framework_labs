@@ -7,6 +7,7 @@ const studentParamsSchema = {
     },
   },
   required: ['id'],
+  additionalProperties: false,
 };
 
 export default studentParamsSchema;

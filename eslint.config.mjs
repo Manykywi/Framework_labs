@@ -10,6 +10,9 @@ export default defineConfig([
     languageOptions: {
       globals: globals.node,
     },
+    rules: {
+      'no-process-env': 'error',
+    },
   },
   {
     files: ['**/*.js', '**/*.mjs'],
