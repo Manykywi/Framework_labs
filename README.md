@@ -14,41 +14,32 @@
 | Лабораторна №2            | `Lab_2`        | Конфігурація, логування та graceful shutdown |
 | Лабораторна №3 (CommonJS) | `Lab_3_Common` | REST API з модульною структурою (CommonJS)   |
 | Лабораторна №3 (ESM)      | `Lab_3_ESM`    | REST API з використанням ECMAScript Modules  |
+| Лабораторна №4            | `Lab_4`        | Веб-фреймворк Fastify                        |
 
 ---
 
-# Лабораторна робота №3 (CommonJS)
+# ЛАБОРАТОРНА РОБОТА No 4
 
-## Опис
-
-REST API сервер для управління студентами, побудований на HTTP сервері Node.js.
-
-У цій версії проєкту використовується **CommonJS модульна система**:
-
-- `require()`
-- `module.exports`
-
-Проєкт має модульну архітектуру та поділений на:
-
-- controllers
-- services
-- routes
-- data
-- validators
-- constants
-- utils
+**Тема:** веб-фреймворк Fastify  
+**Мета роботи:** Ознайомлення з архітектурою фреймворку Fastify та набуття практичних навичок розробки веб-сервісів з використанням plugin system, JSON Schema, life cycle hooks та екосистеми офіційних плагінів.
 
 ---
 
-# Основні можливості
+# Опис проєкту
 
-- REST API для управління студентами
-- Валідація даних через **AJV**
-- Конфігурація через `.env`
-- Логування HTTP запитів
-- Health check endpoint
-- ESLint + Prettier
-- npm scripts для перевірки коду
+REST API сервер для управління студентами, побудований на **Fastify**.
+
+## Основні можливості (Lab 4)
+
+- **Plugin system**: підключення плагінів та модулів через `fastify.register(...)`
+- **JSON Schema**: валідація `params`, `querystring`, `body` та типізовані `response` у `schema`
+- **Life cycle hooks**: приклади `onRequest`, `onResponse`, `onClose`
+- **Офіційні плагіни Fastify**:
+  - `@fastify/env` (завантаження/валідація `.env`)
+  - `@fastify/sensible` (зручні HTTP-helpers, напр. `reply.notFound()`, `reply.unauthorized()`)
+  - `@fastify/cors`
+  - `@fastify/helmet`
+- Graceful shutdown: обробка `SIGINT`/`SIGTERM` та коректне закриття сервера через `fastify.close()`
 
 ---
 
@@ -61,10 +52,10 @@ git clone https://github.com/KYNZEK/Technology-Framework.git
 cd Technology-Framework
 ```
 
-Перехід у гілку CommonJS:
+Перехід у гілку Lab 4:
 
 ```bash
-git checkout Lab_3_Common
+git checkout Lab_4
 ```
 
 Встановлення залежностей:
@@ -77,37 +68,27 @@ npm install
 
 # Налаштування
 
-Створіть файл `.env`:
+Створіть файл `.env` (або скопіюйте з `.env.example`) та заповніть значення:
 
 ```
 PORT=3000
 HOSTNAME=localhost
 NODE_ENV=development
-```
+ADMIN_API_KEY=your-secret-key
 
-Приклад налаштувань знаходиться у файлі:
-
-```
-.env.example
+# Обовʼязково лише для production:
+# CORS_ORIGIN=https://example.com
 ```
 
 ---
 
 # Запуск сервера
 
-Запуск:
-
 ```bash
 npm start
 ```
 
-або
-
-```bash
-node app.js
-```
-
-Сервер буде доступний за адресою:
+Сервер буде доступний за адресою (за замовчуванням):
 
 ```
 http://localhost:3000
@@ -131,32 +112,21 @@ http://localhost:3000
 
 # API Endpoints
 
-## Health Check
+## Health
 
 ### GET `/health`
 
-Повертає інформацію про стан сервера.
+Публічний health-check.
 
-Приклад відповіді:
+### GET `/health/details`
 
-```json
-{
-  "pid": 12345,
-  "nodeVersion": "v20.0.0",
-  "platform": "win32",
-  "uptime": 120
-}
-```
+Детальний health-check (потрібен заголовок `x-api-key: <ADMIN_API_KEY>`).
 
 ---
 
-# Студенти API
+## Students
 
-## Отримати всіх студентів
-
-```
-GET /students
-```
+### GET `/students`
 
 Фільтр по курсу:
 
@@ -164,21 +134,7 @@ GET /students
 GET /students?course=2
 ```
 
----
-
-## Отримати студента
-
-```
-GET /students/:id
-```
-
----
-
-## Створити студента
-
-```
-POST /students
-```
+### POST `/students`
 
 Body:
 
@@ -190,114 +146,74 @@ Body:
 }
 ```
 
----
+### PATCH `/students/:id`
 
-## Оновити студента
-
-```
-PUT /students/:id
-```
-
----
-
-## Видалити студента
-
-```
-DELETE /students/:id
-```
-
----
-
-# Логування
-
-Формат логування:
-
-```
-key="value"
-```
-
-Приклад логів:
-
-```
-time="2026-03-01T17:22:20.377Z" level="INFO" method="GET" url="/students" status="200"
-```
+### DELETE `/students/:id`
 
 ---
 
 # Структура проєкту
 
 ```
-Lab_3_Common/
-├─ app.js                 # Точка входу, створює HTTP сервер
-├─ package.json           # Інформація про проєкт та npm-скрипти
-├─ eslint.config.mjs      # Конфіг ESLint
-├─ README.md              # Документація
+/
+├─ app.js                   # Точка входу, конфіг Fastify + hooks + graceful shutdown
+├─ package.json             # Інформація про проєкт та npm-скрипти
+├─ eslint.config.mjs        # Конфіг ESLint
+├─ README.md                # Документація
 ├─ config/
-│  └─ config.js           # Завантаження та валідація конфігурації
+│  └─ env.js                # Плагін @fastify/env
 ├─ constants/
-│  └─ httpStatus.js       # HTTP статуси
+│  └─ errorMessages.js      # Текст помилок API
 ├─ controllers/
-│  └─ student.controller.js # Обробники HTTP-запитів
+│  ├─ health.controller.js  # Обробники health endpoint-ів
+│  └─ student.controller.js # Обробники student endpoint-ів
 ├─ services/
-│  └─ student.service.js  # Бізнес-логіка для студентів
+│  └─ student.service.js    # Бізнес-логіка студентів
 ├─ routes/
-│  └─ student.routes.js   # Маршрутизація
+│  ├─ health.routes.js      # Роутер (Fastify plugin)
+│  └─ student.routes.js     # Роутер (Fastify plugin)
 ├─ data/
-│  └─ students.js         # In-memory дані (масив студентів)
-├─ utils/
-│  └─ logger.js           # Логування
-└─ validators/
-   ├─ config.schema.js
-   ├─ studentBody.schema.js
+│  └─ students.js           # In-memory дані (масив студентів)
+└─ schemas/
+   ├─ env.schema.js
+   ├─ healthPublicResponse.schema.js
+   ├─ healthResponse.schema.js
+   ├─ student.schema.js
+   ├─ studentCreateBody.schema.js
+   ├─ studentCreatedResponse.schema.js
    ├─ studentParams.schema.js
-   └─ studentQuery.schema.js
+   ├─ studentPatchBody.schema.js
+   ├─ studentQuery.schema.js
+   ├─ studentRemovedResponse.schema.js
+   ├─ studentsListResponse.schema.js
+   └─ studentUpdatedResponse.schema.js
 ```
 
 ---
 
 # Модульна система
 
-У цій версії використовується **CommonJS**.
+Проєкт використовує **ECMAScript Modules (ESM)**.
 
 Приклад імпорту:
 
 ```javascript
-const studentService = require('../services/student.service');
+import Fastify from 'fastify';
 ```
 
 Приклад експорту:
 
 ```javascript
-module.exports = {
-  getStudents,
-};
+export default studentRoutes;
 ```
 
 ---
 
 # Технології
 
-- Node.js
-- CommonJS
-- AJV
+- Node.js (>= 20)
+- Fastify
+- `@fastify/env`, `@fastify/sensible`, `@fastify/cors`, `@fastify/helmet`
+- JSON Schema / AJV (через Fastify)
 - ESLint
 - Prettier
-
----
-
-# Fastify: graceful shutdown та обробка помилок
-
-## Сигнали та глобальні обробники процесу
-
-- `SIGINT` — сигнал переривання (зазвичай `Ctrl+C` у терміналі). Використовується для коректного завершення роботи сервера (graceful shutdown).
-- `SIGTERM` — сигнал завершення від ОС/менеджера процесів (Docker, systemd тощо). Також використовується для graceful shutdown.
-- `uncaughtException` — подія Node.js, що спрацьовує, коли виникає виняток, який ніде не був перехоплений (`try/catch`). Після такого стан процесу може бути неконсистентним, тому правильна стратегія — залогувати й завершити процес після спроби коректно закрити сервер.
-- `unhandledRejection` — подія Node.js, що спрацьовує, коли Promise відхиляється (reject), але для нього не встановлено обробник (`.catch()` або `try/await/catch`). У продакшені зазвичай також призводить до завершення процесу після graceful shutdown.
-
-## Чим це відрізняється від `fastify.setErrorHandler(...)`
-
-`fastify.setErrorHandler(...)` — це **обробник помилок на рівні HTTP-запиту** всередині Fastify. Він:
-
-- ловить помилки, що виникають під час обробки конкретного запиту (парсинг body, валідація, помилки в хендлерах/хуках);
-- дозволяє повернути клієнту коректну HTTP-відповідь;
-- **не** обробляє сигнали ОС (`SIGINT`, `SIGTERM`) і **не** є заміною глобальним обробникам `uncaughtException`/`unhandledRejection`, бо ці події стосуються всього процесу, а не одного запиту.
