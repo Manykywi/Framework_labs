@@ -7,6 +7,7 @@ import staticPlugin from '@fastify/static';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import websocket from '@fastify/websocket';
 import fs from 'node:fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
@@ -15,6 +16,7 @@ import registerEnv from './config/env.js';
 import studentRoutes from './routes/student.routes.js';
 import studentRoutesV2 from './routes/student.routes.v2.js';
 import { createGithubRoutes } from './routes/github.routes.js';
+import wsRoutes from './routes/ws.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { runBackup } from './src/utils/backup.js';
@@ -127,6 +129,7 @@ await fastify.register(swagger, {
       { name: 'github-v1', description: 'GitHub analytics v1 (sequential)' },
       { name: 'github-v2', description: 'GitHub analytics v2 (parallel)' },
       { name: 'health', description: 'Health check endpoints' },
+      { name: 'backups', description: 'Backup management (protected)' },
     ],
   },
 });
@@ -135,6 +138,8 @@ await fastify.register(swaggerUi, {
   routePrefix: '/docs',
   uiConfig: { docExpansion: 'list', deepLinking: false },
 });
+
+await fastify.register(websocket);
 
 fastify.addHook('onResponse', (request, reply, done) => {
   const statusCode = reply.statusCode;
@@ -184,6 +189,7 @@ fastify.setErrorHandler((error, request, reply) => {
 });
 
 await fastify.register(healthRoutes);
+await fastify.register(wsRoutes);
 await fastify.register(studentRoutes, { prefix: '/api/v1' });
 await fastify.register(studentRoutesV2, { prefix: '/api/v2' });
 await fastify.register(createGithubRoutes('v1'), { prefix: '/api/v1' });

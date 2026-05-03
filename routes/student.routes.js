@@ -9,11 +9,38 @@ import studentUpdatedResponseSchema from '#schemas/studentUpdatedResponse.schema
 import studentRemovedResponseSchema from '#schemas/studentRemovedResponse.schema';
 import studentDetailsSchema from '#schemas/studentDetails.schema';
 
+const backupParamsSchema = {
+  type: 'object',
+  properties: { timestamp: { type: 'string' } },
+  required: ['timestamp'],
+};
+
 async function studentRoutes(fastify) {
   fastify.get(
     '/students/export',
-    { schema: { tags: ['students'], summary: 'Export all students as CSV' } },
+    {
+      schema: {
+        tags: ['students'],
+        summary: 'Export students as CSV (?transform=true replaces grades with avgGrade)',
+        querystring: {
+          type: 'object',
+          properties: { transform: { type: 'string', enum: ['true', 'false'] } },
+          additionalProperties: false,
+        },
+      },
+    },
     studentController.exportStudents
+  );
+
+  fastify.get(
+    '/students/stream',
+    {
+      schema: {
+        tags: ['students'],
+        summary: 'Stream all students as NDJSON (application/x-ndjson)',
+      },
+    },
+    studentController.streamStudents
   );
 
   fastify.post(
@@ -98,6 +125,36 @@ async function studentRoutes(fastify) {
       },
     },
     studentController.getStudentDetails
+  );
+
+  fastify.get(
+    '/backups',
+    {
+      preHandler: async (request, reply) => {
+        if (request.headers['x-api-key'] !== fastify.config.ADMIN_API_KEY) {
+          return reply.unauthorized('Unauthorized');
+        }
+      },
+      schema: { tags: ['backups'], summary: 'List available backups (requires x-api-key)' },
+    },
+    studentController.listBackups
+  );
+
+  fastify.get(
+    '/backups/:timestamp',
+    {
+      preHandler: async (request, reply) => {
+        if (request.headers['x-api-key'] !== fastify.config.ADMIN_API_KEY) {
+          return reply.unauthorized('Unauthorized');
+        }
+      },
+      schema: {
+        tags: ['backups'],
+        summary: 'Download a backup file (requires x-api-key)',
+        params: backupParamsSchema,
+      },
+    },
+    studentController.getBackup
   );
 }
 

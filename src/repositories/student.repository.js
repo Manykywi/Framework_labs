@@ -62,4 +62,18 @@ async function remove(id) {
   }
 }
 
-export default { findAll, findById, create, update, remove };
+async function* findAllStream() {
+  let files;
+  try {
+    files = (await fs.readdir(DATA_DIR)).filter((f) => f.endsWith('.json')).sort();
+  } catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw error;
+  }
+  for (const file of files) {
+    const content = await fs.readFile(path.join(DATA_DIR, file), 'utf8');
+    yield JSON.parse(content);
+  }
+}
+
+export default { findAll, findById, create, update, remove, findAllStream };
