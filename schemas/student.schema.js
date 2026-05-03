@@ -8,8 +8,10 @@ const studentSchema = {
       type: 'array',
       items: { type: 'number' },
     },
+    email: { type: 'string' },
+    image: { anyOf: [{ type: 'string' }, { type: 'null' }] },
   },
-  required: ['id', 'name', 'course', 'grades'],
+  required: ['id', 'name', 'course', 'grades', 'email'],
   additionalProperties: false,
 };
 

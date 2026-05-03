@@ -1,57 +1,27 @@
-import { getStudents, setStudents } from '#data/students';
+import studentRepository from '../src/repositories/student.repository.js';
 
-function getAllStudents(course) {
-  let students = [...getStudents()];
-
+async function getAllStudents(course) {
+  let students = await studentRepository.findAll();
   if (course) {
     students = students.filter((s) => String(s.course) === String(course));
   }
-
   return students;
 }
 
-function createStudent(data) {
-  const students = getStudents();
-
-  const lastId = students.length ? students[students.length - 1].id : 0;
-
-  const newStudent = {
-    id: lastId + 1,
-    ...data,
-  };
-
-  students.push(newStudent);
-
-  return newStudent;
+async function createStudent(data) {
+  return studentRepository.create(data);
 }
 
-function updateStudent(id, updates) {
-  const students = getStudents();
-
-  const index = students.findIndex((s) => s.id === id);
-
-  if (index === -1) return null;
-
-  students[index] = { ...students[index], ...updates };
-
-  return students[index];
+async function updateStudent(id, updates) {
+  return studentRepository.update(id, updates);
 }
 
-function deleteStudent(id) {
-  const students = getStudents();
-
-  const newStudents = students.filter((s) => s.id !== id);
-
-  if (newStudents.length === students.length) return false;
-
-  setStudents(newStudents);
-
-  return true;
+async function deleteStudent(id) {
+  return studentRepository.remove(id);
 }
 
-export default {
-  getAllStudents,
-  createStudent,
-  updateStudent,
-  deleteStudent,
-};
+async function getStudentById(id) {
+  return studentRepository.findById(id);
+}
+
+export default { getAllStudents, createStudent, updateStudent, deleteStudent, getStudentById };

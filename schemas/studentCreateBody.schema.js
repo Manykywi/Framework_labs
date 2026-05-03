@@ -7,8 +7,9 @@ const studentCreateBodySchema = {
       type: 'array',
       items: { type: 'number' },
     },
+    email: { type: 'string' },
   },
-  required: ['name', 'course', 'grades'],
+  required: ['name', 'course', 'grades', 'email'],
   additionalProperties: false,
 };
 

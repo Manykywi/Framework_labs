@@ -2,11 +2,24 @@ import Fastify from 'fastify';
 import sensible from '@fastify/sensible';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
+import staticPlugin from '@fastify/static';
 import fs from 'node:fs';
+import fsPromises from 'fs/promises';
+import path from 'path';
+import crypto from 'crypto';
 import registerEnv from './config/env.js';
 import studentRoutes from './routes/student.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import ERROR_MESSAGES from '#constants/errorMessages';
+import { runBackup } from './src/utils/backup.js';
+import StudentModel from './src/models/item.model.js';
+
+const VERSION_FILE = path.join(process.cwd(), 'data', 'version.json');
+
+function computeModelHash() {
+  return crypto.createHash('md5').update(JSON.stringify(StudentModel)).digest('hex');
+}
 
 let isShuttingDown = false;
 
@@ -92,6 +105,15 @@ await fastify.register(cors, {
 
 await fastify.register(helmet, { global: true });
 
+await fastify.register(multipart, {
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+await fastify.register(staticPlugin, {
+  root: path.join(process.cwd(), 'uploads'),
+  prefix: '/uploads/',
+});
+
 fastify.addHook('onResponse', (request, reply, done) => {
   const statusCode = reply.statusCode;
 
@@ -154,6 +176,21 @@ fastify.setErrorHandler((error, request, reply) => {
 await fastify.register(healthRoutes);
 await fastify.register(studentRoutes);
 
+async function checkSchemaVersion() {
+  const currentHash = computeModelHash();
+  try {
+    const content = await fsPromises.readFile(VERSION_FILE, 'utf8');
+    const { hash } = JSON.parse(content);
+    if (hash !== currentHash) {
+      fastify.log.warn('Data schema changed. Run "npm run migrate" to update existing files.');
+    }
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      fastify.log.warn('Data schema changed. Run "npm run migrate" to update existing files.');
+    }
+  }
+}
+
 async function gracefulShutdown(signal) {
   if (isShuttingDown) return;
   isShuttingDown = true;
@@ -193,6 +230,9 @@ process.on('unhandledRejection', (reason) => {
 });
 
 try {
+  await runBackup();
+  await checkSchemaVersion();
+
   const address = await fastify.listen({
     port: runtimeConfig.PORT,
     host: runtimeConfig.HOSTNAME,

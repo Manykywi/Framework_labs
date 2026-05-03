@@ -11,8 +11,10 @@
     "#data/*": "./data/*.js",
     "#constants/*": "./constants/*.js",
     "#config/*": "./config/*.js",
-    "#utils/*": "./utils/*.js",
-    "#schemas/*": "./schemas/*.js"
+    "#utils/*": "./src/utils/*.js",
+    "#schemas/*": "./schemas/*.js",
+    "#models/*": "./src/models/*.js",
+    "#repositories/*": "./src/repositories/*.js"
   },
   "engines": {
     "node": ">=20"
@@ -20,6 +22,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
+    "seed": "node src/scripts/seed.js",
+    "migrate": "node src/migrations/migrate.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
@@ -42,7 +46,12 @@
     "@fastify/cors": "^11.2.0",
     "@fastify/env": "^5.0.3",
     "@fastify/helmet": "^13.0.2",
+    "@fastify/multipart": "^10.0.0",
     "@fastify/sensible": "^6.0.4",
+    "@fastify/static": "^9.1.3",
+    "ajv": "^8.20.0",
+    "csv-parse": "^6.2.1",
+    "csv-stringify": "^6.7.0",
     "dotenv": "^17.3.1",
     "fastify": "^5.8.2"
   }

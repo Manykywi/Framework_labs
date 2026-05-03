@@ -7,6 +7,7 @@ const studentPatchBodySchema = {
       type: 'array',
       items: { type: 'number' },
     },
+    email: { type: 'string' },
   },
   minProperties: 1,
   additionalProperties: false,

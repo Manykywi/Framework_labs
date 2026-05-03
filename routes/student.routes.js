@@ -10,6 +10,18 @@ import studentRemovedResponseSchema from '#schemas/studentRemovedResponse.schema
 
 async function studentRoutes(fastify) {
   fastify.get(
+    '/students/export',
+    {},
+    studentController.exportStudents
+  );
+
+  fastify.post(
+    '/students/import',
+    {},
+    studentController.importStudents
+  );
+
+  fastify.get(
     '/students',
     {
       schema: {
@@ -60,6 +72,16 @@ async function studentRoutes(fastify) {
       },
     },
     studentController.deleteStudent
+  );
+
+  fastify.post(
+    '/students/:id/image',
+    {
+      schema: {
+        params: studentParamsSchema,
+      },
+    },
+    studentController.uploadImage
   );
 }
 
