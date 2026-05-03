@@ -7,17 +7,18 @@ import studentsListResponseSchema from '#schemas/studentsListResponse.schema';
 import studentCreatedResponseSchema from '#schemas/studentCreatedResponse.schema';
 import studentUpdatedResponseSchema from '#schemas/studentUpdatedResponse.schema';
 import studentRemovedResponseSchema from '#schemas/studentRemovedResponse.schema';
+import studentDetailsSchema from '#schemas/studentDetails.schema';
 
 async function studentRoutes(fastify) {
   fastify.get(
     '/students/export',
-    {},
+    { schema: { tags: ['students'], summary: 'Export all students as CSV' } },
     studentController.exportStudents
   );
 
   fastify.post(
     '/students/import',
-    {},
+    { schema: { tags: ['students'], summary: 'Import students from CSV or JSON file' } },
     studentController.importStudents
   );
 
@@ -25,10 +26,10 @@ async function studentRoutes(fastify) {
     '/students',
     {
       schema: {
+        tags: ['students'],
+        summary: 'Get all students',
         querystring: studentQuerySchema,
-        response: {
-          200: studentsListResponseSchema,
-        },
+        response: { 200: studentsListResponseSchema },
       },
     },
     studentController.getStudents
@@ -38,10 +39,10 @@ async function studentRoutes(fastify) {
     '/students',
     {
       schema: {
+        tags: ['students'],
+        summary: 'Create a student',
         body: studentCreateBodySchema,
-        response: {
-          201: studentCreatedResponseSchema,
-        },
+        response: { 201: studentCreatedResponseSchema },
       },
     },
     studentController.createStudent
@@ -51,11 +52,11 @@ async function studentRoutes(fastify) {
     '/students/:id',
     {
       schema: {
+        tags: ['students'],
+        summary: 'Update a student',
         params: studentParamsSchema,
         body: studentPatchBodySchema,
-        response: {
-          200: studentUpdatedResponseSchema,
-        },
+        response: { 200: studentUpdatedResponseSchema },
       },
     },
     studentController.updateStudent
@@ -65,10 +66,10 @@ async function studentRoutes(fastify) {
     '/students/:id',
     {
       schema: {
+        tags: ['students'],
+        summary: 'Delete a student',
         params: studentParamsSchema,
-        response: {
-          200: studentRemovedResponseSchema,
-        },
+        response: { 200: studentRemovedResponseSchema },
       },
     },
     studentController.deleteStudent
@@ -78,10 +79,25 @@ async function studentRoutes(fastify) {
     '/students/:id/image',
     {
       schema: {
+        tags: ['students'],
+        summary: 'Upload student image',
         params: studentParamsSchema,
       },
     },
     studentController.uploadImage
+  );
+
+  fastify.get(
+    '/students/:id/details',
+    {
+      schema: {
+        tags: ['students'],
+        summary: 'Get student with course details from external service',
+        params: studentParamsSchema,
+        response: { 200: studentDetailsSchema },
+      },
+    },
+    studentController.getStudentDetails
   );
 }
 

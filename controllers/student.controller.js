@@ -9,6 +9,7 @@ import studentService from '#services/student.service';
 import HTTP from '#constants/httpStatus';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { buildImageUrl } from '../src/utils/imageUrl.js';
+import externalService from '../src/services/external.service.js';
 import studentCreateBodySchema from '#schemas/studentCreateBody.schema';
 
 const ajv = new Ajv({ coerceTypes: true });
@@ -25,6 +26,13 @@ async function getStudents(request, reply) {
   reply.code(HTTP.OK).send({ count: items.length, items });
 }
 
+async function getStudentsPaginated(request, reply) {
+  const { page = 1, limit = 10, course } = request.query;
+  const result = await studentService.getStudentsPaginated(course, Number(page), Number(limit));
+  const data = result.data.map((s) => withImageUrl(request, s));
+  return reply.code(HTTP.OK).send({ data, meta: result.meta });
+}
+
 async function createStudent(request, reply) {
   const data = request.body;
   const student = await studentService.createStudent(data);
@@ -35,19 +43,23 @@ async function updateStudent(request, reply) {
   const { id } = request.params;
   const updates = request.body;
   const student = await studentService.updateStudent(id, updates);
-  if (!student) {
-    return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
-  }
+  if (!student) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
   return reply.code(HTTP.OK).send({ message: 'Updated', student: withImageUrl(request, student) });
 }
 
 async function deleteStudent(request, reply) {
   const { id } = request.params;
   const removed = await studentService.deleteStudent(id);
-  if (!removed) {
-    return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
-  }
+  if (!removed) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
   return reply.code(HTTP.OK).send({ message: 'Student removed' });
+}
+
+async function getStudentDetails(request, reply) {
+  const { id } = request.params;
+  const student = await studentService.getStudentById(id);
+  if (!student) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
+  const courseDetails = await externalService.getCourseDetails(student.course);
+  return reply.code(HTTP.OK).send({ ...withImageUrl(request, student), courseDetails });
 }
 
 async function exportStudents(request, reply) {
@@ -78,24 +90,24 @@ async function importStudents(request, reply) {
 
   for (let i = 0; i < records.length; i++) {
     const record = records[i];
-    const { id: _id, image: _image, ...data } = record;
+    const { id: _id, image: _image, ...body } = record;
 
-    if (data.grades && typeof data.grades === 'string') {
+    if (body.grades && typeof body.grades === 'string') {
       try {
-        data.grades = JSON.parse(data.grades);
+        body.grades = JSON.parse(body.grades);
       } catch {
-        data.grades = data.grades.split(',').map(Number);
+        body.grades = body.grades.split(',').map(Number);
       }
     }
-    if (data.course !== undefined) data.course = Number(data.course);
+    if (body.course !== undefined) body.course = Number(body.course);
 
-    const valid = validateStudent(data);
+    const valid = validateStudent(body);
     if (!valid) {
       rejected.push({ index: i + 1, reason: ajv.errorsText(validateStudent.errors) });
       continue;
     }
 
-    await studentService.createStudent(data);
+    await studentService.createStudent(body);
     imported++;
   }
 
@@ -104,34 +116,29 @@ async function importStudents(request, reply) {
 
 async function uploadImage(request, reply) {
   const { id } = request.params;
-
   const student = await studentService.getStudentById(id);
-  if (!student) {
-    return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
-  }
+  if (!student) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
 
   const data = await request.file();
-
   if (!['image/jpeg', 'image/png'].includes(data.mimetype)) {
     return reply.badRequest('Only JPEG and PNG images are allowed');
   }
 
   const uploadDir = path.join(process.cwd(), 'uploads', String(id));
   await mkdir(uploadDir, { recursive: true });
-
-  const imagePath = path.join(uploadDir, 'image.jpg');
-  await pipeline(data.file, createWriteStream(imagePath));
+  await pipeline(data.file, createWriteStream(path.join(uploadDir, 'image.jpg')));
 
   const updated = await studentService.updateStudent(id, { image: `/${id}/image.jpg` });
-
   return reply.code(HTTP.OK).send({ message: 'Image uploaded', student: withImageUrl(request, updated) });
 }
 
 export default {
   getStudents,
+  getStudentsPaginated,
   createStudent,
   updateStudent,
   deleteStudent,
+  getStudentDetails,
   exportStudents,
   importStudents,
   uploadImage,

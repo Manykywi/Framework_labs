@@ -4,12 +4,17 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import staticPlugin from '@fastify/static';
+import rateLimit from '@fastify/rate-limit';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import fs from 'node:fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import registerEnv from './config/env.js';
 import studentRoutes from './routes/student.routes.js';
+import studentRoutesV2 from './routes/student.routes.v2.js';
+import { createGithubRoutes } from './routes/github.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { runBackup } from './src/utils/backup.js';
@@ -26,27 +31,21 @@ let isShuttingDown = false;
 function readNodeEnvFromDotenv() {
   try {
     const content = fs.readFileSync('.env', 'utf8');
-
     for (const line of content.split(/\r?\n/)) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#')) continue;
-
       const eqIndex = trimmed.indexOf('=');
       if (eqIndex === -1) continue;
-
       const key = trimmed.slice(0, eqIndex).trim();
       if (key !== 'NODE_ENV') continue;
-
       let value = trimmed.slice(eqIndex + 1).trim();
       value = value.replace(/^['"]|['"]$/g, '');
-
       if (value === 'production' || value === 'development') return value;
       return undefined;
     }
   } catch {
     return undefined;
   }
-
   return undefined;
 }
 
@@ -59,11 +58,7 @@ const logger =
         level: 'info',
         transport: {
           target: 'pino-pretty',
-          options: {
-            colorize: true,
-            translateTime: 'SYS:standard',
-            singleLine: true,
-          },
+          options: { colorize: true, translateTime: 'SYS:standard', singleLine: true },
         },
       };
 
@@ -71,11 +66,7 @@ const fastify = Fastify({
   ignoreTrailingSlash: true,
   disableRequestLogging: true,
   logger,
-  ajv: {
-    customOptions: {
-      coerceTypes: true,
-    },
-  },
+  ajv: { customOptions: { coerceTypes: true } },
 });
 
 try {
@@ -103,7 +94,16 @@ await fastify.register(cors, {
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 
-await fastify.register(helmet, { global: true });
+await fastify.register(helmet, {
+  global: true,
+  contentSecurityPolicy: false,
+});
+
+await fastify.register(rateLimit, {
+  global: true,
+  max: 100,
+  timeWindow: '1 minute',
+});
 
 await fastify.register(multipart, {
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -114,19 +114,38 @@ await fastify.register(staticPlugin, {
   prefix: '/uploads/',
 });
 
+await fastify.register(swagger, {
+  openapi: {
+    info: {
+      title: 'Students API',
+      description: 'Lab 6 — REST API with versioning, rate limiting and Swagger',
+      version: '2.0.0',
+    },
+    tags: [
+      { name: 'students', description: 'v1 student endpoints' },
+      { name: 'students-v2', description: 'v2 student endpoints (pagination)' },
+      { name: 'github-v1', description: 'GitHub analytics v1 (sequential)' },
+      { name: 'github-v2', description: 'GitHub analytics v2 (parallel)' },
+      { name: 'health', description: 'Health check endpoints' },
+    ],
+  },
+});
+
+await fastify.register(swaggerUi, {
+  routePrefix: '/docs',
+  uiConfig: { docExpansion: 'list', deepLinking: false },
+});
+
 fastify.addHook('onResponse', (request, reply, done) => {
   const statusCode = reply.statusCode;
-
   if (!runtimeConfig.isProduction) {
     request.log.info({ method: request.method, url: request.url, statusCode }, 'request');
     done();
     return;
   }
-
   if (statusCode >= 400) {
     request.log.error({ method: request.method, url: request.url, statusCode }, 'request');
   }
-
   done();
 });
 
@@ -141,16 +160,8 @@ fastify.setNotFoundHandler((request, reply) => {
 
 fastify.setErrorHandler((error, request, reply) => {
   if (reply.sent) return;
-
   const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
-
-  const logContext = {
-    requestId: request.id,
-    method: request.method,
-    url: request.url,
-    params: request.params,
-    query: request.query,
-  };
+  const logContext = { requestId: request.id, method: request.method, url: request.url };
 
   if (statusCode >= 500) {
     fastify.log.error({ err: error, ...logContext }, 'Unhandled request error');
@@ -164,7 +175,6 @@ fastify.setErrorHandler((error, request, reply) => {
     reply.badRequest(ERROR_MESSAGES.INVALID_JSON);
     return;
   }
-
   if (Array.isArray(error?.validation) && error.validation.length) {
     reply.badRequest(ERROR_MESSAGES.VALIDATION_ERROR);
     return;
@@ -174,7 +184,10 @@ fastify.setErrorHandler((error, request, reply) => {
 });
 
 await fastify.register(healthRoutes);
-await fastify.register(studentRoutes);
+await fastify.register(studentRoutes, { prefix: '/api/v1' });
+await fastify.register(studentRoutesV2, { prefix: '/api/v2' });
+await fastify.register(createGithubRoutes('v1'), { prefix: '/api/v1' });
+await fastify.register(createGithubRoutes('v2'), { prefix: '/api/v2' });
 
 async function checkSchemaVersion() {
   const currentHash = computeModelHash();
@@ -194,16 +207,12 @@ async function checkSchemaVersion() {
 async function gracefulShutdown(signal) {
   if (isShuttingDown) return;
   isShuttingDown = true;
-
   fastify.log.warn(`Received ${signal}. Starting graceful shutdown...`);
-
   const exitCode = signal === 'SIGINT' || signal === 'SIGTERM' ? 0 : 1;
-
   const shutdownTimer = setTimeout(() => {
     fastify.log.error('Graceful shutdown timed out. Forcing exit.');
     process.exit(1);
   }, 10_000).unref();
-
   try {
     await fastify.close();
     fastify.log.info('Fastify server closed. Exiting.');
@@ -232,11 +241,7 @@ process.on('unhandledRejection', (reason) => {
 try {
   await runBackup();
   await checkSchemaVersion();
-
-  const address = await fastify.listen({
-    port: runtimeConfig.PORT,
-    host: runtimeConfig.HOSTNAME,
-  });
+  const address = await fastify.listen({ port: runtimeConfig.PORT, host: runtimeConfig.HOSTNAME });
   fastify.log.info(`Server running at ${address}`);
 } catch (error) {
   fastify.log.error(error instanceof Error ? error.stack || error.message : String(error));
