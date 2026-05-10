@@ -1,79 +1,83 @@
-import fs from 'fs/promises';
-import path from 'path';
-import writeAtomic from '../utils/atomicWrite.js';
-import StudentModel from '../models/item.model.js';
+export class StudentRepository {
+  constructor(db) {
+    this.db = db;
+  }
 
-const DATA_DIR = path.join(process.cwd(), 'data', 'items');
+  _parseRow(row) {
+    return { ...row, grades: JSON.parse(row.grades) };
+  }
 
-function filePath(id) {
-  return path.join(DATA_DIR, `${id}.json`);
-}
+  async findAll(course) {
+    let sql = 'SELECT * FROM students';
+    const params = [];
+    if (course) {
+      sql += ' WHERE course = ?';
+      params.push(Number(course));
+    }
+    sql += ' ORDER BY id';
+    const [rows] = await this.db.execute(sql, params);
+    return rows.map((r) => this._parseRow(r));
+  }
 
-async function findAll() {
-  try {
-    const files = (await fs.readdir(DATA_DIR)).filter((f) => f.endsWith('.json'));
-    const students = await Promise.all(
-      files.map(async (file) => {
-        const content = await fs.readFile(path.join(DATA_DIR, file), 'utf8');
-        return JSON.parse(content);
-      })
+  async findById(id) {
+    const [rows] = await this.db.execute('SELECT * FROM students WHERE id = ?', [Number(id)]);
+    if (!rows[0]) return null;
+    return this._parseRow(rows[0]);
+  }
+
+  async create(data) {
+    const { name, course, grades = [], email, image = null } = data;
+    const [result] = await this.db.execute(
+      'INSERT INTO students (name, course, grades, email, image) VALUES (?, ?, ?, ?, ?)',
+      [name, Number(course), JSON.stringify(grades), email, image]
     );
-    return students.sort((a, b) => a.id - b.id);
-  } catch (error) {
-    if (error.code === 'ENOENT') return [];
-    throw error;
+    return { id: result.insertId, name, course: Number(course), grades, email, image };
+  }
+
+  async update(id, updates) {
+    const existing = await this.findById(id);
+    if (!existing) return null;
+    const merged = { ...existing, ...updates };
+    await this.db.execute(
+      'UPDATE students SET name=?, course=?, grades=?, email=?, image=? WHERE id=?',
+      [merged.name, merged.course, JSON.stringify(merged.grades), merged.email, merged.image, Number(id)]
+    );
+    return merged;
+  }
+
+  async remove(id) {
+    const [result] = await this.db.execute('DELETE FROM students WHERE id = ?', [Number(id)]);
+    return result.affectedRows > 0;
+  }
+
+  async count(course) {
+    let sql = 'SELECT COUNT(*) as total FROM students';
+    const params = [];
+    if (course) {
+      sql += ' WHERE course = ?';
+      params.push(Number(course));
+    }
+    const [rows] = await this.db.execute(sql, params);
+    return rows[0].total;
+  }
+
+  async findPaginated(course, page = 1, limit = 10) {
+    let sql = 'SELECT * FROM students';
+    const params = [];
+    if (course) {
+      sql += ' WHERE course = ?';
+      params.push(Number(course));
+    }
+    sql += ' ORDER BY id LIMIT ? OFFSET ?';
+    params.push(limit, (page - 1) * limit);
+    const [rows] = await this.db.execute(sql, params);
+    return rows.map((r) => this._parseRow(r));
+  }
+
+  async *findAllStream() {
+    const [rows] = await this.db.execute('SELECT * FROM students ORDER BY id');
+    for (const row of rows) {
+      yield this._parseRow(row);
+    }
   }
 }
-
-async function findById(id) {
-  try {
-    const content = await fs.readFile(filePath(id), 'utf8');
-    return JSON.parse(content);
-  } catch (error) {
-    if (error.code === 'ENOENT') return null;
-    throw error;
-  }
-}
-
-async function create(data) {
-  const all = await findAll();
-  const lastId = all.length ? all[all.length - 1].id : 0;
-  const id = lastId + 1;
-  const newStudent = { ...StudentModel, ...data, id };
-  await writeAtomic(filePath(id), newStudent);
-  return newStudent;
-}
-
-async function update(id, updates) {
-  const student = await findById(id);
-  if (!student) return null;
-  const updated = { ...student, ...updates };
-  await writeAtomic(filePath(id), updated);
-  return updated;
-}
-
-async function remove(id) {
-  try {
-    await fs.unlink(filePath(id));
-    return true;
-  } catch (error) {
-    if (error.code === 'ENOENT') return false;
-    throw error;
-  }
-}
-
-async function* findAllStream() {
-  let files;
-  try {
-    files = (await fs.readdir(DATA_DIR)).filter((f) => f.endsWith('.json')).sort();
-  } catch (error) {
-    if (error.code === 'ENOENT') return;
-    throw error;
-  }
-  for (const file of files) {
-    const content = await fs.readFile(path.join(DATA_DIR, file), 'utf8');
-    yield JSON.parse(content);
-  }
-}
-
-export default { findAll, findById, create, update, remove, findAllStream };

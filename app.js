@@ -9,9 +9,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import websocket from '@fastify/websocket';
 import fs from 'node:fs';
-import fsPromises from 'fs/promises';
 import path from 'path';
-import crypto from 'crypto';
 import registerEnv from './config/env.js';
 import studentRoutes from './routes/student.routes.js';
 import studentRoutesV2 from './routes/student.routes.v2.js';
@@ -20,13 +18,9 @@ import wsRoutes from './routes/ws.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { runBackup } from './src/utils/backup.js';
-import StudentModel from './src/models/item.model.js';
-
-const VERSION_FILE = path.join(process.cwd(), 'data', 'version.json');
-
-function computeModelHash() {
-  return crypto.createHash('md5').update(JSON.stringify(StudentModel)).digest('hex');
-}
+import mysqlPlugin from './db/mysql.js';
+import { StudentRepository } from './src/repositories/student.repository.js';
+import { StudentService } from './services/student.service.js';
 
 let isShuttingDown = false;
 
@@ -120,7 +114,7 @@ await fastify.register(swagger, {
   openapi: {
     info: {
       title: 'Students API',
-      description: 'Lab 6 — REST API with versioning, rate limiting and Swagger',
+      description: 'Lab 8 — REST API with MySQL via mysql2',
       version: '2.0.0',
     },
     tags: [
@@ -140,6 +134,10 @@ await fastify.register(swaggerUi, {
 });
 
 await fastify.register(websocket);
+await fastify.register(mysqlPlugin);
+
+fastify.decorate('studentRepo', new StudentRepository(fastify.mysql));
+fastify.decorate('studentService', new StudentService(fastify.studentRepo));
 
 fastify.addHook('onResponse', (request, reply, done) => {
   const statusCode = reply.statusCode;
@@ -195,21 +193,6 @@ await fastify.register(studentRoutesV2, { prefix: '/api/v2' });
 await fastify.register(createGithubRoutes('v1'), { prefix: '/api/v1' });
 await fastify.register(createGithubRoutes('v2'), { prefix: '/api/v2' });
 
-async function checkSchemaVersion() {
-  const currentHash = computeModelHash();
-  try {
-    const content = await fsPromises.readFile(VERSION_FILE, 'utf8');
-    const { hash } = JSON.parse(content);
-    if (hash !== currentHash) {
-      fastify.log.warn('Data schema changed. Run "npm run migrate" to update existing files.');
-    }
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      fastify.log.warn('Data schema changed. Run "npm run migrate" to update existing files.');
-    }
-  }
-}
-
 async function gracefulShutdown(signal) {
   if (isShuttingDown) return;
   isShuttingDown = true;
@@ -245,8 +228,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 try {
-  await runBackup();
-  await checkSchemaVersion();
+  await runBackup(fastify.studentRepo);
   const address = await fastify.listen({ port: runtimeConfig.PORT, host: runtimeConfig.HOSTNAME });
   fastify.log.info(`Server running at ${address}`);
 } catch (error) {
