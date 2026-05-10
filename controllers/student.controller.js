@@ -7,12 +7,10 @@ import { stringify as csvStringifySync } from 'csv-stringify/sync';
 import { stringify as csvStringify } from 'csv-stringify';
 import { parse } from 'csv-parse/sync';
 import Ajv from 'ajv';
-import studentService from '#services/student.service';
 import HTTP from '#constants/httpStatus';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { buildImageUrl } from '../src/utils/imageUrl.js';
 import externalService from '../src/services/external.service.js';
-import studentRepository from '../src/repositories/student.repository.js';
 import eventBus from '../src/events/eventBus.js';
 import StudentTransform from '../src/transforms/studentTransform.js';
 import NdjsonTransform from '../src/transforms/ndjsonTransform.js';
@@ -29,21 +27,21 @@ function withImageUrl(request, student) {
 
 async function getStudents(request, reply) {
   const course = request.query?.course;
-  const results = await studentService.getAllStudents(course);
+  const results = await request.server.studentService.getAllStudents(course);
   const items = results.map((s) => withImageUrl(request, s));
   reply.code(HTTP.OK).send({ count: items.length, items });
 }
 
 async function getStudentsPaginated(request, reply) {
   const { page = 1, limit = 10, course } = request.query;
-  const result = await studentService.getStudentsPaginated(course, Number(page), Number(limit));
+  const result = await request.server.studentService.getStudentsPaginated(course, Number(page), Number(limit));
   const data = result.data.map((s) => withImageUrl(request, s));
   return reply.code(HTTP.OK).send({ data, meta: result.meta });
 }
 
 async function createStudent(request, reply) {
   const data = request.body;
-  const student = await studentService.createStudent(data);
+  const student = await request.server.studentService.createStudent(data);
   const result = withImageUrl(request, student);
   eventBus.emit('student:created', result);
   return reply.code(HTTP.CREATED).send({ message: 'Created', student: result });
@@ -52,7 +50,7 @@ async function createStudent(request, reply) {
 async function updateStudent(request, reply) {
   const { id } = request.params;
   const updates = request.body;
-  const student = await studentService.updateStudent(id, updates);
+  const student = await request.server.studentService.updateStudent(id, updates);
   if (!student) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
   const result = withImageUrl(request, student);
   eventBus.emit('student:updated', result);
@@ -61,15 +59,15 @@ async function updateStudent(request, reply) {
 
 async function deleteStudent(request, reply) {
   const { id } = request.params;
-  const removed = await studentService.deleteStudent(id);
+  const removed = await request.server.studentService.deleteStudent(id);
   if (!removed) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
-  eventBus.emit('student:deleted', Number(id));
+  eventBus.emit('student:deleted', id);
   return reply.code(HTTP.OK).send({ message: 'Student removed' });
 }
 
 async function getStudentDetails(request, reply) {
   const { id } = request.params;
-  const student = await studentService.getStudentById(id);
+  const student = await request.server.studentService.getStudentById(id);
   if (!student) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
   const courseDetails = await externalService.getCourseDetails(student.course);
   return reply.code(HTTP.OK).send({ ...withImageUrl(request, student), courseDetails });
@@ -79,7 +77,7 @@ async function exportStudents(request, reply) {
   const useTransform = request.query.transform === 'true';
 
   if (useTransform) {
-    const source = Readable.from(studentRepository.findAllStream());
+    const source = Readable.from(request.server.studentRepo.findAllStream());
     const transform = new StudentTransform(request);
     const stringifier = csvStringify({ header: true });
     const output = new PassThrough();
@@ -91,7 +89,7 @@ async function exportStudents(request, reply) {
     return reply.send(output);
   }
 
-  const students = await studentService.getAllStudents();
+  const students = await request.server.studentService.getAllStudents();
   const rows = students.map((s) => ({ ...s, image: buildImageUrl(request, s.image) }));
   const csv = csvStringifySync(rows, { header: true });
   reply.header('Content-Type', 'text/csv');
@@ -100,7 +98,7 @@ async function exportStudents(request, reply) {
 }
 
 async function streamStudents(request, reply) {
-  const source = Readable.from(studentRepository.findAllStream());
+  const source = Readable.from(request.server.studentRepo.findAllStream());
   const transform = new NdjsonTransform(request);
   const output = new PassThrough();
 
@@ -145,7 +143,7 @@ async function importStudents(request, reply) {
       continue;
     }
 
-    await studentService.createStudent(body);
+    await request.server.studentService.createStudent(body);
     imported++;
   }
 
@@ -154,7 +152,7 @@ async function importStudents(request, reply) {
 
 async function uploadImage(request, reply) {
   const { id } = request.params;
-  const student = await studentService.getStudentById(id);
+  const student = await request.server.studentService.getStudentById(id);
   if (!student) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
 
   const data = await request.file();
@@ -166,7 +164,7 @@ async function uploadImage(request, reply) {
   await mkdir(uploadDir, { recursive: true });
   await pipeline(data.file, createWriteStream(path.join(uploadDir, 'image.jpg')));
 
-  const updated = await studentService.updateStudent(id, { image: `/${id}/image.jpg` });
+  const updated = await request.server.studentService.updateStudent(id, { image: `/${id}/image.jpg` });
   return reply.code(HTTP.OK).send({ message: 'Image uploaded', student: withImageUrl(request, updated) });
 }
 

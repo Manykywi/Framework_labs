@@ -1,45 +1,34 @@
-import studentRepository from '../src/repositories/student.repository.js';
-
-async function getAllStudents(course) {
-  let students = await studentRepository.findAll();
-  if (course) {
-    students = students.filter((s) => String(s.course) === String(course));
+export class StudentService {
+  constructor(repo) {
+    this.repo = repo;
   }
-  return students;
-}
 
-async function getStudentsPaginated(course, page = 1, limit = 10) {
-  let students = await studentRepository.findAll();
-  if (course) {
-    students = students.filter((s) => String(s.course) === String(course));
+  async getAllStudents(course) {
+    return this.repo.findAll(course);
   }
-  const total = students.length;
-  const totalPages = Math.ceil(total / limit);
-  const data = students.slice((page - 1) * limit, page * limit);
-  return { data, meta: { total, page, limit, totalPages } };
-}
 
-async function createStudent(data) {
-  return studentRepository.create(data);
-}
+  async getStudentsPaginated(course, page = 1, limit = 10) {
+    const [data, total] = await Promise.all([
+      this.repo.findPaginated(course, page, limit),
+      this.repo.count(course),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+    return { data, meta: { total, page, limit, totalPages } };
+  }
 
-async function updateStudent(id, updates) {
-  return studentRepository.update(id, updates);
-}
+  async createStudent(data) {
+    return this.repo.create(data);
+  }
 
-async function deleteStudent(id) {
-  return studentRepository.remove(id);
-}
+  async updateStudent(id, updates) {
+    return this.repo.update(id, updates);
+  }
 
-async function getStudentById(id) {
-  return studentRepository.findById(id);
-}
+  async deleteStudent(id) {
+    return this.repo.remove(id);
+  }
 
-export default {
-  getAllStudents,
-  getStudentsPaginated,
-  createStudent,
-  updateStudent,
-  deleteStudent,
-  getStudentById,
-};
+  async getStudentById(id) {
+    return this.repo.findById(id);
+  }
+}

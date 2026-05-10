@@ -2,8 +2,8 @@ const studentParamsSchema = {
   type: 'object',
   properties: {
     id: {
-      type: 'integer',
-      minimum: 1,
+      type: 'string',
+      minLength: 1,
     },
   },
   required: ['id'],

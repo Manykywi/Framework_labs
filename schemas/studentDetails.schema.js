@@ -1,7 +1,7 @@
 const studentDetailsSchema = {
   type: 'object',
   properties: {
-    id: { type: 'integer', minimum: 1 },
+    id: { type: 'string', minLength: 1 },
     name: { type: 'string' },
     course: { type: 'integer' },
     grades: { type: 'array', items: { type: 'number' } },

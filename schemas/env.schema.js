@@ -22,8 +22,16 @@ const envSchema = {
       type: 'string',
       minLength: 1,
     },
+    MONGO_URL: {
+      type: 'string',
+      minLength: 1,
+    },
+    MONGO_DB_NAME: {
+      type: 'string',
+      minLength: 1,
+    },
   },
-  required: ['PORT', 'HOSTNAME', 'NODE_ENV', 'ADMIN_API_KEY'],
+  required: ['PORT', 'HOSTNAME', 'NODE_ENV', 'ADMIN_API_KEY', 'MONGO_URL', 'MONGO_DB_NAME'],
   allOf: [
     {
       if: {

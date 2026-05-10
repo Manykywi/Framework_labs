@@ -1,17 +1,32 @@
-import path from 'path';
-import writeAtomic from '../utils/atomicWrite.js';
-import StudentModel from '../models/item.model.js';
+import mongoose from 'mongoose';
+import { Student } from '../../db/models/student.model.js';
+import dotenv from 'dotenv';
 
-const INITIAL_STUDENTS = [
-  { id: 1, name: 'Ivan', course: 2, grades: [5, 4, 5], email: 'ivan@example.com', image: null },
-];
+dotenv.config();
 
-const DATA_DIR = path.join(process.cwd(), 'data', 'items');
+const isForce = process.argv.includes('--force');
 
-for (const student of INITIAL_STUDENTS) {
-  const data = { ...StudentModel, ...student };
-  await writeAtomic(path.join(DATA_DIR, `${student.id}.json`), data);
-  console.log(`Seeded student ${student.id}`);
+await mongoose.connect(process.env.MONGO_URL, {
+  dbName: process.env.MONGO_DB_NAME,
+});
+
+if (isForce) {
+  await Student.deleteMany({});
+  console.log('Cleared all students');
 }
 
-console.log('Seed complete');
+const count = await Student.countDocuments();
+if (count > 0 && !isForce) {
+  console.log('Database already has data. Use seed:force to re-seed.');
+  await mongoose.connection.close();
+  process.exit(0);
+}
+
+const students = [
+  { name: 'Ivan', course: 2, grades: [5, 4, 5], email: 'ivan@example.com', image: null },
+];
+
+await Student.insertMany(students);
+console.log(`Seeded ${students.length} students`);
+
+await mongoose.connection.close();
