@@ -1,219 +1,127 @@
-# Technology-Framework
+Technology-Framework
 
-Репозиторій для лабораторних робіт з курсу **"Фреймворк технології"**.
+Репозиторій містить лабораторні роботи з дисципліни «Фреймворк технології».
 
----
+Структура проєкту
 
-# Структура репозиторію
+Кожна лабораторна реалізована в окремій Git-гілці:
 
-Кожна лабораторна робота знаходиться у **відповідній Git-гілці**.
+Лабораторна	Гілка	Опис
+ЛР №1	Lab_1	Базовий REST API сервер
+ЛР №2	Lab_2	Конфігурація, логування, graceful shutdown
+ЛР №3 (CommonJS)	Lab_3_Common	REST API з модульною структурою (CommonJS)
+ЛР №3 (ESM)	Lab_3_ESM	REST API на ECMAScript Modules
+ЛР №4	Lab_4	Веб-фреймворк Fastify
+ЛАБОРАТОРНА РОБОТА №4
+Тема
 
-| Лабораторна               | Гілка          | Опис                                         |
-| ------------------------- | -------------- | -------------------------------------------- |
-| Лабораторна №1            | `Lab_1`        | Базовий REST API сервер                      |
-| Лабораторна №2            | `Lab_2`        | Конфігурація, логування та graceful shutdown |
-| Лабораторна №3 (CommonJS) | `Lab_3_Common` | REST API з модульною структурою (CommonJS)   |
-| Лабораторна №3 (ESM)      | `Lab_3_ESM`    | REST API з використанням ECMAScript Modules  |
-| Лабораторна №4            | `Lab_4`        | Веб-фреймворк Fastify                        |
+Веб-фреймворк Fastify
 
----
+Мета
 
-# ЛАБОРАТОРНА РОБОТА No 4
+Ознайомлення з архітектурою Fastify та набуття практичних навичок створення веб-сервісів із використанням:
 
-**Тема:** веб-фреймворк Fastify  
-**Мета роботи:** Ознайомлення з архітектурою фреймворку Fastify та набуття практичних навичок розробки веб-сервісів з використанням plugin system, JSON Schema, life cycle hooks та екосистеми офіційних плагінів.
+plugin system
+JSON Schema
+lifecycle hooks
+офіційних плагінів екосистеми Fastify
+Опис проєкту
 
----
+Реалізовано REST API сервер для керування студентами на базі Fastify.
 
-# Опис проєкту
-
-REST API сервер для управління студентами, побудований на **Fastify**.
-
-## Основні можливості (Lab 4)
-
-- **Plugin system**: підключення плагінів та модулів через `fastify.register(...)`
-- **JSON Schema**: валідація `params`, `querystring`, `body` та типізовані `response` у `schema`
-- **Life cycle hooks**: приклади `onRequest`, `onResponse`, `onClose`
-- **Офіційні плагіни Fastify**:
-  - `@fastify/env` (завантаження/валідація `.env`)
-  - `@fastify/sensible` (зручні HTTP-helpers, напр. `reply.notFound()`, `reply.unauthorized()`)
-  - `@fastify/cors`
-  - `@fastify/helmet`
-- Graceful shutdown: обробка `SIGINT`/`SIGTERM` та коректне закриття сервера через `fastify.close()`
-
----
-
-# Встановлення
+Основні можливості (Lab 4)
+Plugin system — підключення модулів через fastify.register(...)
+JSON Schema — валідація params, query, body, а також типізовані відповіді
+Lifecycle hooks — приклади onRequest, onResponse, onClose
+Офіційні плагіни Fastify:
+@fastify/env — робота з .env та його валідація
+@fastify/sensible — зручні HTTP-хелпери (наприклад reply.notFound())
+@fastify/cors — налаштування CORS
+@fastify/helmet — базова безпека HTTP
+Graceful shutdown — коректне завершення роботи сервера через обробку SIGINT / SIGTERM і fastify.close()
+Встановлення
 
 Клонування репозиторію:
 
-```bash
 git clone https://github.com/KYNZEK/Technology-Framework.git
 cd Technology-Framework
-```
 
-Перехід у гілку Lab 4:
+Перехід у гілку:
 
-```bash
 git checkout Lab_4
-```
 
 Встановлення залежностей:
 
-```bash
 npm install
-```
+Налаштування
 
----
+Створіть .env (або скопіюйте з .env.example) і заповніть:
 
-# Налаштування
-
-Створіть файл `.env` (або скопіюйте з `.env.example`) та заповніть значення:
-
-```
 PORT=3000
 HOSTNAME=localhost
 NODE_ENV=development
 ADMIN_API_KEY=your-secret-key
 
-# Обовʼязково лише для production:
-# CORS_ORIGIN=https://example.com
-```
+Для production додатково:
 
----
-
-# Запуск сервера
-
-```bash
+CORS_ORIGIN=https://example.com
+Запуск
 npm start
-```
 
-Сервер буде доступний за адресою (за замовчуванням):
+Сервер запускається за адресою:
 
-```
 http://localhost:3000
-```
-
----
-
-# NPM Scripts
-
-| Команда                | Опис                           |
-| ---------------------- | ------------------------------ |
-| `npm start`            | запуск сервера                 |
-| `npm run dev`          | запуск у режимі розробки       |
-| `npm run lint`         | перевірка ESLint               |
-| `npm run lint:fix`     | автоматичне виправлення ESLint |
-| `npm run format`       | форматування коду Prettier     |
-| `npm run format:check` | перевірка форматування         |
-| `npm run check`        | ESLint + Prettier              |
-
----
-
-# API Endpoints
-
-## Health
-
-### GET `/health`
-
-Публічний health-check.
-
-### GET `/health/details`
-
-Детальний health-check (потрібен заголовок `x-api-key: <ADMIN_API_KEY>`).
-
----
-
-## Students
-
-### GET `/students`
-
-Фільтр по курсу:
-
-```
-GET /students?course=2
-```
-
-### POST `/students`
-
-Body:
-
-```json
+NPM скрипти
+Команда	Опис
+npm start	запуск сервера
+npm run dev	режим розробки
+npm run lint	перевірка ESLint
+npm run lint:fix	автоматичне виправлення помилок
+npm run format	форматування Prettier
+npm run format:check	перевірка форматування
+npm run check	ESLint + Prettier
+API Endpoints
+Health
+GET /health — публічний health-check
+GET /health/details — детальна перевірка (потрібен x-api-key: <ADMIN_API_KEY>)
+Students
+GET /students — список студентів
+фільтр: ?course=2
+POST /students
 {
   "name": "Olena",
   "grades": [5, 4, 5],
   "course": 3
 }
-```
-
-### PATCH `/students/:id`
-
-### DELETE `/students/:id`
-
----
-
-# Структура проєкту
-
-```
+PATCH /students/:id — оновлення студента
+DELETE /students/:id — видалення студента
+Структура проєкту
 /
-├─ app.js                   # Точка входу, конфіг Fastify + hooks + graceful shutdown
-├─ package.json             # Інформація про проєкт та npm-скрипти
-├─ eslint.config.mjs        # Конфіг ESLint
-├─ README.md                # Документація
+├─ app.js
+├─ package.json
+├─ eslint.config.mjs
+├─ README.md
 ├─ config/
-│  └─ env.js                # Плагін @fastify/env
+│  └─ env.js
 ├─ constants/
-│  └─ errorMessages.js      # Текст помилок API
+│  └─ errorMessages.js
 ├─ controllers/
-│  ├─ health.controller.js  # Обробники health endpoint-ів
-│  └─ student.controller.js # Обробники student endpoint-ів
 ├─ services/
-│  └─ student.service.js    # Бізнес-логіка студентів
 ├─ routes/
-│  ├─ health.routes.js      # Роутер (Fastify plugin)
-│  └─ student.routes.js     # Роутер (Fastify plugin)
 ├─ data/
-│  └─ students.js           # In-memory дані (масив студентів)
 └─ schemas/
-   ├─ env.schema.js
-   ├─ healthPublicResponse.schema.js
-   ├─ healthResponse.schema.js
-   ├─ student.schema.js
-   ├─ studentCreateBody.schema.js
-   ├─ studentCreatedResponse.schema.js
-   ├─ studentParams.schema.js
-   ├─ studentPatchBody.schema.js
-   ├─ studentQuery.schema.js
-   ├─ studentRemovedResponse.schema.js
-   ├─ studentsListResponse.schema.js
-   └─ studentUpdatedResponse.schema.js
-```
+Модульна система
 
----
+Проєкт використовує ECMAScript Modules (ESM).
 
-# Модульна система
+Приклад:
 
-Проєкт використовує **ECMAScript Modules (ESM)**.
-
-Приклад імпорту:
-
-```javascript
 import Fastify from 'fastify';
-```
-
-Приклад експорту:
-
-```javascript
 export default studentRoutes;
-```
-
----
-
-# Технології
-
-- Node.js (>= 20)
-- Fastify
-- `@fastify/env`, `@fastify/sensible`, `@fastify/cors`, `@fastify/helmet`
-- JSON Schema / AJV (через Fastify)
-- ESLint
-- Prettier
+Технології
+Node.js (>= 20)
+Fastify
+@fastify/env, @fastify/sensible, @fastify/cors, @fastify/helmet
+JSON Schema (AJV через Fastify)
+ESLint
+Prettier
