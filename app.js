@@ -19,6 +19,7 @@ import healthRoutes from './routes/health.routes.js';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { runBackup } from './src/utils/backup.js';
 import mysqlPlugin from './db/mysql.js';
+import drizzlePlugin from './db/drizzle.js';
 import { StudentRepository } from './src/repositories/student.repository.js';
 import { StudentService } from './services/student.service.js';
 
@@ -114,7 +115,7 @@ await fastify.register(swagger, {
   openapi: {
     info: {
       title: 'Students API',
-      description: 'Lab 8 — REST API with MySQL via mysql2',
+      description: 'Lab 8 — REST API with MySQL via Drizzle ORM',
       version: '2.0.0',
     },
     tags: [
@@ -135,8 +136,9 @@ await fastify.register(swaggerUi, {
 
 await fastify.register(websocket);
 await fastify.register(mysqlPlugin);
+await fastify.register(drizzlePlugin);
 
-fastify.decorate('studentRepo', new StudentRepository(fastify.mysql));
+fastify.decorate('studentRepo', new StudentRepository(fastify.drizzle));
 fastify.decorate('studentService', new StudentService(fastify.studentRepo));
 
 fastify.addHook('onResponse', (request, reply, done) => {

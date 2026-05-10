@@ -1,11 +1,14 @@
 import mysql from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
+import { students } from '../../db/schema.js';
+import { count } from 'drizzle-orm';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const isForce = process.argv.includes('--force');
 
-const conn = await mysql.createConnection({
+const pool = mysql.createPool({
   host: process.env.MYSQL_HOST,
   port: Number(process.env.MYSQL_PORT),
   user: process.env.MYSQL_USER,
@@ -13,29 +16,25 @@ const conn = await mysql.createConnection({
   database: process.env.MYSQL_DB,
 });
 
+const db = drizzle(pool);
+
 if (isForce) {
-  await conn.execute('DELETE FROM students');
+  await db.delete(students);
   console.log('Cleared all students');
 }
 
-const [rows] = await conn.execute('SELECT COUNT(*) as total FROM students');
-if (rows[0].total > 0 && !isForce) {
+const [{ total }] = await db.select({ total: count() }).from(students);
+if (total > 0 && !isForce) {
   console.log('Database already has data. Use seed:force to re-seed.');
-  await conn.end();
+  await pool.end();
   process.exit(0);
 }
 
-const students = [
-  { name: 'Ivan', course: 2, grades: [5, 4, 5], email: 'ivan@example.com', image: null },
+const seedData = [
+  { name: 'Ivan', course: 2, grades: JSON.stringify([5, 4, 5]), email: 'ivan@example.com', image: null },
 ];
 
-for (const s of students) {
-  await conn.execute(
-    'INSERT INTO students (name, course, grades, email, image) VALUES (?, ?, ?, ?, ?)',
-    [s.name, s.course, JSON.stringify(s.grades), s.email, s.image]
-  );
-  console.log(`Seeded student: ${s.name}`);
-}
+await db.insert(students).values(seedData);
+console.log(`Seeded ${seedData.length} students`);
 
-console.log('Seed complete');
-await conn.end();
+await pool.end();
