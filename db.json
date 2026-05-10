@@ -1,0 +1,10 @@
+{
+  "courses": [
+    { "id": 1, "name": "Computer Science", "credits": 240 },
+    { "id": 2, "name": "Software Engineering", "credits": 240 },
+    { "id": 3, "name": "Data Science", "credits": 200 },
+    { "id": 4, "name": "Cybersecurity", "credits": 220 },
+    { "id": 5, "name": "Artificial Intelligence", "credits": 260 },
+    { "id": 6, "name": "Information Systems", "credits": 180 }
+  ]
+}

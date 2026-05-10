@@ -1,0 +1,12 @@
+{
+  "name": "Ivan",
+  "course": 2,
+  "grades": [
+    5,
+    4,
+    5
+  ],
+  "email": "ivan@example.com",
+  "image": null,
+  "id": 1
+}
