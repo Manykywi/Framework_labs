@@ -65,9 +65,11 @@ async function studentRoutes(fastify) {
   fastify.post(
     '/students',
     {
+      onRequest: [fastify.verifyJwt],
       schema: {
         tags: ['students'],
         summary: 'Create a student',
+        security: [{ bearerAuth: [] }],
         body: studentCreateBodySchema,
         response: { 201: studentCreatedResponseSchema },
       },
@@ -78,9 +80,11 @@ async function studentRoutes(fastify) {
   fastify.patch(
     '/students/:id',
     {
+      onRequest: [fastify.verifyJwt],
       schema: {
         tags: ['students'],
         summary: 'Update a student',
+        security: [{ bearerAuth: [] }],
         params: studentParamsSchema,
         body: studentPatchBodySchema,
         response: { 200: studentUpdatedResponseSchema },
@@ -92,9 +96,11 @@ async function studentRoutes(fastify) {
   fastify.delete(
     '/students/:id',
     {
+      onRequest: [fastify.verifyJwt],
       schema: {
         tags: ['students'],
         summary: 'Delete a student',
+        security: [{ bearerAuth: [] }],
         params: studentParamsSchema,
         response: { 200: studentRemovedResponseSchema },
       },

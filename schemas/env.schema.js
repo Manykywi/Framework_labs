@@ -47,8 +47,12 @@ const envSchema = {
     REDIS_PORT: {
       type: 'integer',
     },
+    JWT_SECRET: {
+      type: 'string',
+      minLength: 32,
+    },
   },
-  required: ['PORT', 'HOSTNAME', 'NODE_ENV', 'ADMIN_API_KEY', 'MYSQL_HOST', 'MYSQL_PORT', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DB', 'REDIS_HOST', 'REDIS_PORT'],
+  required: ['PORT', 'HOSTNAME', 'NODE_ENV', 'ADMIN_API_KEY', 'MYSQL_HOST', 'MYSQL_PORT', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DB', 'REDIS_HOST', 'REDIS_PORT', 'JWT_SECRET'],
   allOf: [
     {
       if: {
