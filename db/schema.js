@@ -8,3 +8,9 @@ export const students = mysqlTable('students', {
   email: varchar('email', { length: 255 }).notNull(),
   image: varchar('image', { length: 255 }),
 });
+
+export const users = mysqlTable('users', {
+  id: int('id').autoincrement().primaryKey(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(),
+});

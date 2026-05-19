@@ -10,7 +10,6 @@ import Ajv from 'ajv';
 import HTTP from '#constants/httpStatus';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { buildImageUrl } from '../src/utils/imageUrl.js';
-import externalService from '../src/services/external.service.js';
 import eventBus from '../src/events/eventBus.js';
 import StudentTransform from '../src/transforms/studentTransform.js';
 import NdjsonTransform from '../src/transforms/ndjsonTransform.js';
@@ -69,7 +68,7 @@ async function getStudentDetails(request, reply) {
   const { id } = request.params;
   const student = await request.server.studentService.getStudentById(id);
   if (!student) return reply.notFound(ERROR_MESSAGES.STUDENT_NOT_FOUND);
-  const courseDetails = await externalService.getCourseDetails(student.course);
+  const courseDetails = await request.server.externalService.getCourseDetails(student.course);
   return reply.code(HTTP.OK).send({ ...withImageUrl(request, student), courseDetails });
 }
 

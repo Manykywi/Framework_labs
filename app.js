@@ -20,8 +20,10 @@ import ERROR_MESSAGES from '#constants/errorMessages';
 import { runBackup } from './src/utils/backup.js';
 import mysqlPlugin from './db/mysql.js';
 import drizzlePlugin from './db/drizzle.js';
+import redisPlugin from './db/redis.js';
 import { StudentRepository } from './src/repositories/student.repository.js';
 import { StudentService } from './services/student.service.js';
+import { createExternalService } from './src/services/external.service.js';
 
 let isShuttingDown = false;
 
@@ -96,10 +98,13 @@ await fastify.register(helmet, {
   contentSecurityPolicy: false,
 });
 
+await fastify.register(redisPlugin);
+
 await fastify.register(rateLimit, {
   global: true,
   max: 100,
   timeWindow: '1 minute',
+  redis: fastify.redis,
 });
 
 await fastify.register(multipart, {
@@ -115,8 +120,8 @@ await fastify.register(swagger, {
   openapi: {
     info: {
       title: 'Students API',
-      description: 'Lab 8 — REST API with MySQL via Drizzle ORM',
-      version: '2.0.0',
+      description: 'Lab 9 — Redis caching, rate limiting, and authentication',
+      version: '3.0.0',
     },
     tags: [
       { name: 'students', description: 'v1 student endpoints' },
@@ -139,7 +144,8 @@ await fastify.register(mysqlPlugin);
 await fastify.register(drizzlePlugin);
 
 fastify.decorate('studentRepo', new StudentRepository(fastify.drizzle));
-fastify.decorate('studentService', new StudentService(fastify.studentRepo));
+fastify.decorate('studentService', new StudentService(fastify.studentRepo, fastify.redis));
+fastify.decorate('externalService', createExternalService({ redis: fastify.redis }));
 
 fastify.addHook('onResponse', (request, reply, done) => {
   const statusCode = reply.statusCode;
