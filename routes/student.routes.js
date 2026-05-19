@@ -65,6 +65,7 @@ async function studentRoutes(fastify) {
   fastify.post(
     '/students',
     {
+      onRequest: [fastify.authenticate],
       schema: {
         tags: ['students'],
         summary: 'Create a student',
@@ -78,6 +79,7 @@ async function studentRoutes(fastify) {
   fastify.patch(
     '/students/:id',
     {
+      onRequest: [fastify.authenticate],
       schema: {
         tags: ['students'],
         summary: 'Update a student',
@@ -92,6 +94,7 @@ async function studentRoutes(fastify) {
   fastify.delete(
     '/students/:id',
     {
+      onRequest: [fastify.authenticate],
       schema: {
         tags: ['students'],
         summary: 'Delete a student',

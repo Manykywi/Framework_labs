@@ -8,6 +8,9 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import websocket from '@fastify/websocket';
+import cookie from '@fastify/cookie';
+import session from '@fastify/session';
+import RedisStore from 'fastify-session-redis-store';
 import fs from 'node:fs';
 import path from 'path';
 import registerEnv from './config/env.js';
@@ -16,6 +19,7 @@ import studentRoutesV2 from './routes/student.routes.v2.js';
 import { createGithubRoutes } from './routes/github.routes.js';
 import wsRoutes from './routes/ws.routes.js';
 import healthRoutes from './routes/health.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import ERROR_MESSAGES from '#constants/errorMessages';
 import { runBackup } from './src/utils/backup.js';
 import mysqlPlugin from './db/mysql.js';
@@ -23,7 +27,9 @@ import drizzlePlugin from './db/drizzle.js';
 import redisPlugin from './db/redis.js';
 import { StudentRepository } from './src/repositories/student.repository.js';
 import { StudentService } from './services/student.service.js';
+import { UserRepository } from './src/repositories/user.repository.js';
 import { createExternalService } from './src/services/external.service.js';
+import { createAuthService } from './src/services/auth.service.js';
 
 let isShuttingDown = false;
 
@@ -120,10 +126,11 @@ await fastify.register(swagger, {
   openapi: {
     info: {
       title: 'Students API',
-      description: 'Lab 9 — Redis caching, rate limiting, and authentication',
+      description: 'Lab 9 Session — Redis caching, rate limiting, session-based authentication',
       version: '3.0.0',
     },
     tags: [
+      { name: 'auth', description: 'Session-based authentication' },
       { name: 'students', description: 'v1 student endpoints' },
       { name: 'students-v2', description: 'v2 student endpoints (pagination)' },
       { name: 'github-v1', description: 'GitHub analytics v1 (sequential)' },
@@ -143,9 +150,29 @@ await fastify.register(websocket);
 await fastify.register(mysqlPlugin);
 await fastify.register(drizzlePlugin);
 
+await fastify.register(cookie);
+await fastify.register(session, {
+  secret: fastify.config.SESSION_SECRET,
+  store: new RedisStore({ client: fastify.redis, ttl: 86400 }),
+  cookie: {
+    httpOnly: true,
+    secure: runtimeConfig.isProduction,
+    maxAge: 86400000,
+  },
+  saveUninitialized: false,
+});
+
+fastify.decorate('authenticate', async (request, reply) => {
+  if (!request.session.userId) {
+    return reply.code(401).send({ error: 'Unauthorized' });
+  }
+});
+
 fastify.decorate('studentRepo', new StudentRepository(fastify.drizzle));
 fastify.decorate('studentService', new StudentService(fastify.studentRepo, fastify.redis));
 fastify.decorate('externalService', createExternalService({ redis: fastify.redis }));
+fastify.decorate('userRepo', new UserRepository(fastify.drizzle));
+fastify.decorate('authService', createAuthService({ userRepo: fastify.userRepo }));
 
 fastify.addHook('onResponse', (request, reply, done) => {
   const statusCode = reply.statusCode;
@@ -196,6 +223,7 @@ fastify.setErrorHandler((error, request, reply) => {
 
 await fastify.register(healthRoutes);
 await fastify.register(wsRoutes);
+await fastify.register(authRoutes);
 await fastify.register(studentRoutes, { prefix: '/api/v1' });
 await fastify.register(studentRoutesV2, { prefix: '/api/v2' });
 await fastify.register(createGithubRoutes('v1'), { prefix: '/api/v1' });
