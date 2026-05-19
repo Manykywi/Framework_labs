@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      target: builder
+    environment:
+      NODE_ENV: development
+      JWT_SECRET: dev-jwt-secret-change-me-long-string-32chars
+      ADMIN_API_KEY: dev-admin-key
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: node server.js

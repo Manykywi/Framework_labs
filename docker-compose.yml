@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      target: runner
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      ADMIN_API_KEY: changeme-admin-key
+      CORS_ORIGIN: http://localhost:3000
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: lab
+      MYSQL_PASSWORD: secret
+      MYSQL_DB: lab9
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: production-jwt-secret-must-be-at-least-32-chars
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: lab
+      MYSQL_PASSWORD: secret
+      MYSQL_DATABASE: lab9
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  mysql_data:
+  redis_data:

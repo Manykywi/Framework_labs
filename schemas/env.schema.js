@@ -12,7 +12,7 @@ const envSchema = {
     },
     NODE_ENV: {
       type: 'string',
-      enum: ['development', 'production'],
+      enum: ['development', 'production', 'test'],
     },
     ADMIN_API_KEY: {
       type: 'string',
